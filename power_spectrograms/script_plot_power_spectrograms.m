@@ -58,7 +58,7 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               figProps.topMargin - botMargin - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
                                           
-for i_chDB = 1 : 4%length(chDB_list)
+for i_chDB = 2 : 4%length(chDB_list)
     
 %     if i_chDB < 7
 %         hilbert_025Hz_directory = '/Volumes/RecordingsLeventhal2/stop-sig_reanalysis BU/Hilbert transformed LFP 025 Hz bins';
@@ -96,7 +96,16 @@ for i_chDB = 1 : 4%length(chDB_list)
     numSessions = length( sessionList );
     numRegions  = length( regionList );
     
-    for iTrialType = 1 : length(trialTypeList)
+    if i_chDB == 2
+        startTrialType = 4;
+    else
+        startTrialType = 1;
+    end
+    for iTrialType = startTrialType : length(trialTypeList)
+
+        if i_chDB > 1 && (iTrialType == 2 || iTrialType == 3)
+            continue;
+        end
         trialType = trialTypeList{iTrialType}
         
 
@@ -327,6 +336,8 @@ for i_chDB = 1 : 4%length(chDB_list)
         region_power_spectrogram_metadata.f = f;
         region_power_spectrogram_metadata.eventList = eventList;
         region_power_spectrogram_metadata.trialType = trialType;
+        region_power_spectrogram_metadata.Fs = Fs;
+        region_power_spectrogram_metadata.twin = twin;
               
         regionSummaryMatName = [implantID '_' trialType '_powerSpect_across_sessions.mat'];
         regionSummaryMatName = fullfile(subject_powerSpectDir, regionSummaryMatName);
@@ -334,12 +345,8 @@ for i_chDB = 1 : 4%length(chDB_list)
         mean_spect = zeros(numRegions, numEvents, numFreqs, numSamps);
         numValidSessions = zeros(1, numRegions);
         numPagesForRegions = 0;
-        PDFname = fullfile(subject_powerSpectDir, [implantID '_' trialType '_powerSpect_powerSpect_across_sessions.pdf']);
+        PDFname = fullfile(subject_powerSpectDir, [implantID '_' trialType '_powerSpect_across_sessions.pdf']);
         for iRegion = 1 : numRegions
-            if rem(iRegion, figProps.m) == 1
-                numPagesForRegions = numPagesForRegions + 1;
-                [h_fig, h_axes] = createFigPanels5(figProps);
-            end
 
             for iSession = 1 : numSessions
 

@@ -7,7 +7,7 @@
 
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 hilbert_1Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
-hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
+
 powerSpectrogramDir = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_spectrograms';
 % phaseRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_correlations';
 
@@ -17,7 +17,7 @@ powerSpectrogramDir = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/powe
 % numEvents = length(eventList);
 
 eventList{1} = {'noseCenterIn'};
-eventList{2} = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn'};
+eventList{2} = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn','noseSideOut'};
 eventList{3} = eventList{2};
 eventList{4} = {'cueOn','noseCenterIn','tone','whiteNoise','foodHopperClick'};
 eventList{5} = {'cueOn','noseCenterIn','tone','whiteNoise','noseCenterOut'};
@@ -36,7 +36,13 @@ for iTrialType = 2:numTrialTypes
 %     stepSize(iTrialType)    = 0.05;
 end
 
-for i_chDB = 1 : 4%length(chDB_list)
+for i_chDB = 2 : 2%length(chDB_list)
+    
+    if i_chDB > 7
+        hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
+    else
+        hilbert_025Hz_directory = '/Volumes/RecordingsLeventhal2/stop-sig_reanalysis BU/Hilbert transformed LFP 025 Hz bins';
+    end
 
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -72,12 +78,12 @@ for i_chDB = 1 : 4%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length( sessionList );
     
-    if i_chDB == 1
-        startTrialType = 2;
+    if i_chDB == 2
+        startTrialType = 3;
     else
-        startTrialType = 2;
+        startTrialType = 1;
     end
-    for iTrialType = 2:2%startTrialType : length(trialTypeList)
+    for iTrialType = startTrialType : length(trialTypeList)
         trialType = trialTypeList{iTrialType}
         numEvents = length(eventList{iTrialType});
         
@@ -86,7 +92,7 @@ for i_chDB = 1 : 4%length(chDB_list)
         powerSpect_metadata.trialType = trialType;
         powerSpect_metadata.eventtWin = twin;
         
-        for iSession = 12:12% : numSessions
+        for iSession = numSessions-5 : numSessions
             
             powerSpect_sessionDir = fullfile(subject_powerSpectDir, sessionList{iSession});
             if ~exist(powerSpect_sessionDir, 'dir')

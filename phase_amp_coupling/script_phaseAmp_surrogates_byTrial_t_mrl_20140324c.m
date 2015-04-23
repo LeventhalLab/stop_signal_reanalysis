@@ -52,7 +52,7 @@ phaseAmp_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
 eventLists{1} = {'noseCenterIn'};
-eventLists{2} = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn'};
+eventLists{2} = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn','noseSideOut'};
 eventLists{3} = eventLists{2};
 eventLists{4} = {'cueOn','noseCenterIn','tone','whiteNoise','foodHopperClick'};
 eventLists{5} = {'cueOn','noseCenterIn','tone','whiteNoise','noseCenterOut'};
@@ -122,8 +122,10 @@ for i_chDB = 4 : 4%length(chDB_list)
         surrogate_phaseAmp_metadata.eventtWin       = eventtWin(iTrialType, :);
 %         surrogate_phaseAmp_metadata.analysisWin     = analysisWin(iTrialType);
 %         surrogate_phaseAmp_metadata.stepSize        = stepSize(iTrialType);
-        if i_chDB==4 && iTrialType==6
-            startSession = 21;
+        if i_chDB==4 && iTrialType==5
+            startSession = 17;
+        elseif i_chDB==4 && iTrialType==6
+            startSession = 23;
         else
             startSession = 18;
         end

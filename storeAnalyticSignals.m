@@ -30,7 +30,7 @@ freqBands(:,2) = (center_freq - freq_band_width/2);
 freqBands(:,3) = (center_freq + freq_band_width/2);
 freqBands(:,4) = (center_freq + freq_band_width/2) + band_edge_width;
     
-for i_chDB = 7 : 7%length(chDB_list)
+for i_chDB = 1 : 1%length(chDB_list)
     
 %     if i_chDB > 2 && i_chDB < 10; continue; end
     
@@ -169,7 +169,7 @@ for i_chDB = 7 : 7%length(chDB_list)
             save(metadata_filename, 'metadata');
         end
         
-        % check to see if this session is already done
+        check to see if this session is already done
         if (metadata.numWrittenFreqs == numBands) && (metadata.numWrittenChannels == numCh)
             continue;
         end
@@ -191,7 +191,7 @@ for i_chDB = 7 : 7%length(chDB_list)
         
         if metadata.numWrittenChannels == numCh; continue; end   % if all channels for this session already written, move to next session (not sure if this is really necessary)
         chtic = tic;
-        for iCh = metadata.numWrittenChannels + 1 : numCh
+        for iCh = 1:numCh%metadata.numWrittenChannels + 1 : numCh
             iCh
             
             repWire = getRepWire( sessionChannels{iCh} );

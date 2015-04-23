@@ -85,9 +85,9 @@ for i_chDB = 4 : 4%length(chDB_list)
             case 4,
                 sessions_to_plot = [];
             case 5,
-                sessions_to_plot = [40];
+                sessions_to_plot = [9,11,17];
             case 6,
-                sessions_to_plot = [];
+                sessions_to_plot = [32];
             case 7,
                 sessions_to_plot = [];
         end

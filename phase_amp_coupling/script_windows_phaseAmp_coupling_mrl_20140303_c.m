@@ -8,13 +8,14 @@ high_freq_range = [10 101];
 
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 hilbert_1Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
-hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
+% hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
+hilbert_025Hz_directory = '/Volumes/RecordingsLeventhal2/stop-sig_reanalysis BU/Hilbert transformed LFP 025 Hz bins';
 phaseRThist_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_histogram_analysis';
 phaseAmp_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phaseAmp_windowed';
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
 eventList{1} = {'noseCenterIn'};
-eventList{2} = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn'};
+eventList{2} = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn','noseSideOut'};
 eventList{3} = eventList{2};
 eventList{4} = {'cueOn','noseCenterIn','tone','whiteNoise','foodHopperClick'};
 eventList{5} = {'cueOn','noseCenterIn','tone','whiteNoise','noseCenterOut'};
@@ -35,7 +36,7 @@ for iTrialType = 2 : numTrialTypes
 %     stepSize(iTrialType)    = 0.05;
 end
 
-for i_chDB = 7 : length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -72,11 +73,11 @@ for i_chDB = 7 : length(chDB_list)
     numSessions = length( sessionList );
 
     if i_chDB == 7
-        startTrialType = 1;
+        startTrialType = 2;
     else
-        startTrialType = 1;
+        startTrialType = 2;
     end
-    for iTrialType = startTrialType : length(trialTypeList)
+    for iTrialType = startTrialType : 3%length(trialTypeList)
         trialType = trialTypeList{iTrialType}
         
         phaseAmp_metadata.low_freq_range  = low_freq_range;

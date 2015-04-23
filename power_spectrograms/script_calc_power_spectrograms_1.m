@@ -92,7 +92,7 @@ for i_chDB = 2 : 2%length(chDB_list)
         powerSpect_metadata.trialType = trialType;
         powerSpect_metadata.eventtWin = twin;
         
-        for iSession = 1 : numSessions
+        for iSession = 1 : numSessions-6
             
             powerSpect_sessionDir = fullfile(subject_powerSpectDir, sessionList{iSession});
             if ~exist(powerSpect_sessionDir, 'dir')

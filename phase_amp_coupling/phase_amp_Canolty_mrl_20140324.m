@@ -8,6 +8,9 @@ function [mrv, low_freqs, high_freqs] = phase_amp_Canolty_mrl_20140324(ch, ...
 %
 % INPUTS:
 %   ch - single element of a channel DB structure
+%   eventList - string or cell array of strings containing the names of
+%       behavioral events around which to calculate phase-amplitude
+%       coupling
 %   eventtWin - 2-element vector containing the limits of the window within
 %       to look around each event (i.e., [-1 1] would look one second
 %       before and after each event)
@@ -48,6 +51,9 @@ lfp_root          = '/Volumes/Recordings/dan/Leventhal Neuron 2012_summary/Leven
 hilbert_1Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
 hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
 
+if ~iscell(eventList)
+    eventList = {eventList};
+end
 for iarg = 1 : 2 : nargin - 4
     switch lower(varargin{iarg})
         case 'lowfreqrange',

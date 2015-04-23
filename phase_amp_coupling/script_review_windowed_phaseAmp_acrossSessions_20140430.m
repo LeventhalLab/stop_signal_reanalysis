@@ -89,7 +89,7 @@ for i_chDB = 4 : 4%length(chDB_list)
     allRegionList = getRegionsfromChannelDB( channels );
     num_allRegions = length(allRegionList);
     
-    for iTrialType = 4 : 4%length(trialTypeList)
+    for iTrialType = 5 : 5%length(trialTypeList)
         trialType = trialTypeList{iTrialType};
 
         fig_saveName = cell(length(var_to_plot), length(plotTypes));

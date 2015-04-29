@@ -56,7 +56,7 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
 % NOW NEED TO AVERAGE ACROSS ANIMALS
                                           
-for i_chDB = 1 : 4%length(chDB_list)
+for i_chDB = 4 : 4%length(chDB_list)
     
     implantID = implantID_from_ratID(chDB_list{i_chDB}(1:5));
     
@@ -82,7 +82,7 @@ for i_chDB = 1 : 4%length(chDB_list)
         startTrialType = 1;
     end
     for iTrialType = startTrialType : length(trialTypeList)
-        if iTrialType == 2 || iTrialType == 3   % take this out once calculations updated for nose-side-out event
+        if iTrialType == 3 || iTrialType == 3   % take this out once calculations updated for nose-side-out event
             continue;
         end
         

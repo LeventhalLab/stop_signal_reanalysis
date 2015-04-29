@@ -1,4 +1,4 @@
-% script_calc_power_RTcorrelations
+% script_calc_power_spectrograms
 
 % UPDATED 10-27-2014
 
@@ -7,7 +7,7 @@
 
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 hilbert_1Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
-hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
+% hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
 powerSpectrogramDir = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_spectrograms';
 % phaseRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_correlations';
 
@@ -17,7 +17,7 @@ powerSpectrogramDir = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/powe
 % numEvents = length(eventList);
 
 eventList{1} = {'noseCenterIn'};
-eventList{2} = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn'};
+eventList{2} = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn','noseSideOut'};
 eventList{3} = eventList{2};
 eventList{4} = {'cueOn','noseCenterIn','tone','whiteNoise','foodHopperClick'};
 eventList{5} = {'cueOn','noseCenterIn','tone','whiteNoise','noseCenterOut'};
@@ -30,14 +30,20 @@ numTrialTypes = length(trialTypeList);
 eventtWin(1,:) = [-1 2];   % for analysis of all trials
 % analysisWin(1) = 3;
 % stepSize(1)    = 3;
-for iTrialType = 2:numTrialTypes
+for iTrialType = 2 : numTrialTypes
     eventtWin(iTrialType,:) = [-1 1];
 %     analysisWin(iTrialType) = 0.1;
 %     stepSize(iTrialType)    = 0.05;
 end
 
-for i_chDB = 1 : length(chDB_list)
+for i_chDB = 3 : 3%length(chDB_list)
 
+    if i_chDB > 7
+        hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
+    else
+        hilbert_025Hz_directory = '/Volumes/RecordingsLeventhal2/stop-sig_reanalysis BU/Hilbert transformed LFP 025 Hz bins';
+    end
+    
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
         chDB_file = fullfile(chDB_directory, chDB_fnames{i_chDB});
@@ -72,12 +78,12 @@ for i_chDB = 1 : length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length( sessionList );
     
-    if i_chDB == 1
-        startTrialType = 2;
+    if i_chDB == 3
+        startTrialType = 5;
     else
-        startTrialType = 2;
+        startTrialType = 1;
     end
-    for iTrialType = 2:2%startTrialType : length(trialTypeList)
+    for iTrialType = startTrialType : length(trialTypeList)
         trialType = trialTypeList{iTrialType}
         numEvents = length(eventList{iTrialType});
         
@@ -86,7 +92,14 @@ for i_chDB = 1 : length(chDB_list)
         powerSpect_metadata.trialType = trialType;
         powerSpect_metadata.eventtWin = twin;
         
-        for iSession = 1 : 10%numSessions
+        if i_chDB == 7 && iTrialType == 1
+            startSession = 1;
+        else
+            startSession = 1;
+        end
+        for iSession = startSession : numSessions
+            
+            if strcmpi(sessionList{iSession},'IM328_20120914_08-10-23');continue;end
             
             powerSpect_sessionDir = fullfile(subject_powerSpectDir, sessionList{iSession});
             if ~exist(powerSpect_sessionDir, 'dir')
@@ -210,6 +223,26 @@ for i_chDB = 1 : length(chDB_list)
                     trialType, sessionList{iSession}, iSession, numSessions, iCh, numCh))
 
                 ch = sessionChannels{iCh};
+                if any(ch.wire.markedGood) == 0; continue; end
+                
+                if strcmp(ch.name, 'IM296_20120402_10-57-37t14') || ...
+                   strcmp(ch.name, 'IM296_20120405_11-50-15t04') || ...
+                   strcmp(ch.name, 'IM296_20120405_11-50-15t05') || ...
+                   strcmp(ch.name, 'IM296_20120406_10-17-28t04') || ...
+                   strcmp(ch.name, 'IM296_20120406_10-17-28t05') || ...
+                   strcmp(ch.name, 'IM296_20120408_14-00-40t04') || ...
+                   strcmp(ch.name, 'IM296_20120408_14-00-40t05') || ...
+                   strcmp(ch.name, 'IM296_20120409_10-46-10t05') || ...
+                   strcmp(ch.name, 'IM296_20120410_10-01-04t02') || ...
+                   strcmp(ch.name, 'IM296_20120410_10-01-04t04') || ...
+                   strcmp(ch.name, 'IM296_20120410_10-01-04t05') || ...
+                   strcmp(ch.name, 'IM296_20120411_10-15-38t04') || ...
+                   strcmp(ch.name, 'IM296_20120411_10-15-38t05') || ...
+                   strcmp(ch.name, 'IM296_20120412_09-58-01t04') || ...
+                   strcmp(ch.name, 'IM296_20120412_09-58-01t05') || ...
+                   strcmp(ch.session, 'IM310_20120516_10-18-04')
+                    continue
+                end
             
 %                 hilbert_name = ['analytic_' sessionChannels{iCh}.name '.bin'];
 %                 hilbert_name = fullfile(hilbert_sessionDir, hilbert_name);                   % WORKING HERE, NEED TO FIGURE OUT METADATA.CHNAMES
@@ -228,7 +261,7 @@ for i_chDB = 1 : length(chDB_list)
                 for iEvent = 1 : numEvents
     %                 tic
                     for iFreq = 1 : numFreqs
-
+% iFreq
                         if iFreq <= num_freq_025
                             activeHilbertDir = hilbert_025Hz_directory;
                             freqIdx = iFreq;

@@ -36,7 +36,7 @@ for iTrialType = 2 : numTrialTypes
 %     stepSize(iTrialType)    = 0.05;
 end
 
-for i_chDB = 2 : 2%length(chDB_list)
+for i_chDB = 3 : 3%length(chDB_list)
 
     if i_chDB > 7
         hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
@@ -78,12 +78,12 @@ for i_chDB = 2 : 2%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length( sessionList );
     
-    if i_chDB == 2
+    if i_chDB == 3
         startTrialType = 4;
     else
         startTrialType = 1;
     end
-    for iTrialType = startTrialType : 4%length(trialTypeList)
+    for iTrialType = startTrialType : length(trialTypeList)
         trialType = trialTypeList{iTrialType}
         numEvents = length(eventList{iTrialType});
         

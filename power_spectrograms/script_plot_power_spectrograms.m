@@ -58,7 +58,7 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               figProps.topMargin - botMargin - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
                                           
-for i_chDB = 2 : 4%length(chDB_list)
+for i_chDB = 4 : 4%length(chDB_list)
     
 %     if i_chDB < 7
 %         hilbert_025Hz_directory = '/Volumes/RecordingsLeventhal2/stop-sig_reanalysis BU/Hilbert transformed LFP 025 Hz bins';
@@ -96,16 +96,16 @@ for i_chDB = 2 : 4%length(chDB_list)
     numSessions = length( sessionList );
     numRegions  = length( regionList );
     
-    if i_chDB == 2
+    if i_chDB == 4
         startTrialType = 4;
     else
         startTrialType = 1;
     end
     for iTrialType = startTrialType : length(trialTypeList)
 
-        if i_chDB > 1 && (iTrialType == 2 || iTrialType == 3)
-            continue;
-        end
+%         if i_chDB > 1 && (iTrialType == 2 || iTrialType == 3)
+%             continue;
+%         end
         trialType = trialTypeList{iTrialType}
         
 

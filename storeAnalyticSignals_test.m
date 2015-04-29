@@ -30,7 +30,9 @@ freqBands(:,2) = (center_freq - freq_band_width/2);
 freqBands(:,3) = (center_freq + freq_band_width/2);
 freqBands(:,4) = (center_freq + freq_band_width/2) + band_edge_width;
     
-for i_chDB = 1 : 1%length(chDB_list)
+plotStartSamp = 10000;
+plotEndSamp = plotStartSamp + 10000;
+for i_chDB = 2 : 2%length(chDB_list)
     
 %     if i_chDB > 2 && i_chDB < 10; continue; end
     
@@ -170,9 +172,9 @@ for i_chDB = 1 : 1%length(chDB_list)
         end
         
 %         check to see if this session is already done
-        if (metadata.numWrittenFreqs == numBands) && (metadata.numWrittenChannels == numCh)
-            continue;
-        end
+%         if (metadata.numWrittenFreqs == numBands) && (metadata.numWrittenChannels == numCh)
+%             continue;
+%         end
         
         disp(['loading ' lfp_fileName '...']);
         tic
@@ -189,7 +191,7 @@ for i_chDB = 1 : 1%length(chDB_list)
 
         t = linspace(1/Fs, lfpDuration, numSamples);
         
-        if metadata.numWrittenChannels == numCh; continue; end   % if all channels for this session already written, move to next session (not sure if this is really necessary)
+%         if metadata.numWrittenChannels == numCh; continue; end   % if all channels for this session already written, move to next session (not sure if this is really necessary)
         chtic = tic;
         for iCh = 1:numCh%metadata.numWrittenChannels + 1 : numCh
             iCh
@@ -200,18 +202,21 @@ for i_chDB = 1 : 1%length(chDB_list)
             if isempty(lfp_idx);continue;end
             
             volt_lfp = int2volt(lfp(lfp_idx, :), 'gain', header.channel(lfp_idx).gain);
+            figure
+            plot(t(plotStartSamp:plotEndSamp),volt_lfp(plotStartSamp:plotEndSamp))
+            hold on
 
             hilbert_name = ['analytic_' sessionChannels{iCh}.name '.bin'];
             hilbert_name = fullfile(hilbert_sessionDir, hilbert_name);
             
-            if exist(hilbert_name,'file')
-                fid = fopen(hilbert_name, 'a', bitOrder);
-            else
-                fid = fopen(hilbert_name, 'w', bitOrder);
-            end
+%             if exist(hilbert_name,'file')
+%                 fid = fopen(hilbert_name, 'a', bitOrder);
+%             else
+%                 fid = fopen(hilbert_name, 'w', bitOrder);
+%             end
 
-            if metadata.numWrittenFreqs == numBands; continue; end   % if all freqs already written, move to next channel (not sure if this is really necessary)
-            for iFreq = metadata.numWrittenFreqs + 1 : numBands
+%             if metadata.numWrittenFreqs == numBands; continue; end   % if all freqs already written, move to next channel (not sure if this is really necessary)
+            for iFreq = 20:numBands%metadata.numWrittenFreqs + 1 : numBands
                 [n,fo,mo,w] = firpmord(freqBands(iFreq, :), ...
                                        M, ...
                                        [1 1 1] * 0.01, ...
@@ -231,11 +236,13 @@ for i_chDB = 1 : 1%length(chDB_list)
                 tic
                 lfpFilt = filtfilt(b, 1, volt_lfp);
                 toc
+                plot(t(plotStartSamp:plotEndSamp),lfpFilt(plotStartSamp:plotEndSamp),'r')
                 
                 % now calculate the analytic signal
                 tic
                 lfp_analytic = hilbert(lfpFilt)';
                 toc
+                plot(t(plotStartSamp:plotEndSamp),abs(lfp_analytic(plotStartSamp:plotEndSamp)),'g')
                 
                 sigmax = max(abs([real(lfp_analytic); imag(lfp_analytic)]));
                 metadata.sigmax(iFreq) = sigmax;
@@ -245,15 +252,15 @@ for i_chDB = 1 : 1%length(chDB_list)
                 imag_sig = int16(imag(scaled_analytic));
                 
 %                 fwrite(fid, [real(lfp_analytic), imag(lfp_analytic)], 'double');
-                fwrite(fid, [real_sig, imag_sig], 'int16');
+%                 fwrite(fid, [real_sig, imag_sig], 'int16');
                 
-                metadata.numWrittenFreqs = iFreq;
-                save(metadata_filename, 'metadata');
+%                 metadata.numWrittenFreqs = iFreq;
+%                 save(metadata_filename, 'metadata');
                 
             end
             sprintf('%f seconds to calculate channel', toc(chtic))
             
-            fclose(fid);
+%             fclose(fid);
 
             metadata.numWrittenChannels = iCh;  
             save(metadata_filename, 'metadata');

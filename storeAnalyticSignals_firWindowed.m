@@ -2,14 +2,9 @@
 % potentials
 
 bitOrder = 'b';
-% chDB_directory    = '\\141.214.46.83\PublicLeventhal1\dan\stop-signal reanalysis\stop-signal data structures';
-% lfp_root          = '\\141.214.46.83\PublicLeventhal1\dan\stop-signal reanalysis\stop-signal LFPs';
-
-publicDir = 'PublicLeventhal1';
 
 chDB_directory    = ['/Volumes/' publicDir '/dan/stop-signal reanalysis/stop-signal data structures'];
-% lfp_root          = ['/Volumes/' publicDir '/dan/stop-signal reanalysis/stop-signal LFPs'];
-lfp_root          = ['/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/stop-signal LFPs'];
+lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/stop-signal LFPs';
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
 % establish the center frequencies for the band pass filters. Make the
@@ -30,7 +25,7 @@ freqBands(:,2) = (center_freq - freq_band_width/2);
 freqBands(:,3) = (center_freq + freq_band_width/2);
 freqBands(:,4) = (center_freq + freq_band_width/2) + band_edge_width;
     
-for i_chDB = 1 : 1%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
     
 %     if i_chDB > 2 && i_chDB < 10; continue; end
     

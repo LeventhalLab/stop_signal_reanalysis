@@ -31,6 +31,8 @@ function [filterBank] = scalogramFilterBank(f, Fs, numSamples, varargin)
 doplot = false;
 
 samples_to_pad = 0;   % number of samples to pad the filter bank with on each side of the center Gabor wavelet
+normalizeFilter = true;
+
 if size(varargin)>0
     for iarg= 1:2:length(varargin),   % assume an even number of varargs
         switch lower(varargin{iarg}),
@@ -38,6 +40,8 @@ if size(varargin)>0
 				doplot = varargin{iarg+1};
             case {'numpadsamples'}
                 samples_to_pad = varargin{iarg+1};
+            case {'normalizefilter'}
+                normalizeFilter = varargin{iarg + 1};
         end % end of switch
     end % end of for iarg
 end
@@ -57,6 +61,12 @@ recip_gsigma = f ./ 0.849;
 gaussWindow = exp( -0.5*(t'*recip_gsigma).^2 );
 sinusoid_matrix = exp(1i*2*pi*t'*f);
 t_filterBank = (1/pi^0.25) * gaussWindow .* sinusoid_matrix;
+
+if normalizeFilter
+    for i_f = 1 : length(f)
+        t_filterBank(:,i_f) = t_filterBank(:,i_f) ./ sum(abs(t_filterBank(:,i_f)));
+    end
+end
 
 filterBank = fft(t_filterBank); % move the kernels into frequency space
 

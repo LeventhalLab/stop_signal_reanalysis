@@ -44,9 +44,8 @@ fpass = [1 100]; % default, look at 1-30Hz
 numfreqs = 100; 
 Fs = 31250/63;
 doplot = 0;
-haveW = 0;
-kernelsize = 1; % seconds
 freqList = [];
+f_filterBank = [];
 
 if size(varargin)>0
     for iarg= 1:2:length(varargin),   % assume an even number of varargs
@@ -57,13 +56,14 @@ if size(varargin)>0
 				numfreqs = varargin{iarg+1};
 			case {'fs', 'samplingrate'}
 				Fs = varargin{iarg+1};
-			case 'kernelwidth'
-				kernelwidth = varargin{iarg+1};
 			case {'doplot', 'plot'}
 				doplot = varargin{iarg+1};
             case 'freqlist',
                 freqList = varargin{iarg + 1};
                 numfreqs = length(freqList);
+            case 'filterbank'
+                f_filterBank = varargin{iarg + 1};
+                numfreqs = size(f_filterBank, 2);
         end % end of switch
     end % end of for iarg
 end
@@ -76,55 +76,59 @@ data = padarray(data, [round(numOrigSamples/2), 0], 0, 'both');
 [numsamples, numtrials] = size(data);
 
 %% Create the filter bank (where each kernel is the length of the signal input)
-x = linspace(-numsamples/2, numsamples/2, numsamples)/Fs;
+if isempty(f_filterBank)
+    x = linspace(-numsamples/2, numsamples/2, numsamples)/Fs;
 
-% windowLength = (numsamples/Fs)/2
-% x = linspace(-windowLength, windowLength, numsamples);
+    % windowLength = (numsamples/Fs)/2
+    % x = linspace(-windowLength, windowLength, numsamples);
 
 
-% t_filterBank = zeros(numsamples, numfreqs);
+    % t_filterBank = zeros(numsamples, numfreqs);
 
-if isempty(freqList)   % if freqlist explicitly specified by the user, don't manufacture the linearly spaced frequency list
-                       % in this case, fpass and numfreqs are unused
-    freqList = linspace(fpass(1), fpass(2), numfreqs);
+    if isempty(freqList)   % if freqlist explicitly specified by the user, don't manufacture the linearly spaced frequency list
+                           % in this case, fpass and numfreqs are unused
+        freqList = linspace(fpass(1), fpass(2), numfreqs);
+    end
+    numfreqs = length(freqList);
+    for i=1:numfreqs
+        % expand/contract the Gaussian window to accomodate lower/higher
+        % frequences instead of using a constant window width -DL 9/28/2011
+        
+        % effective center frequency is f/a
+        % Setting f = 0.849, gsigma = 0.849/frequency of interest
+        gsigma = 0.849 / freqList(i);
+        gaussWindow = exp( -0.5*(x./gsigma).^2 );
+        gaussWindow = padarray(gaussWindow, [0 numsamples - length(gaussWindow)]);
+        
+        % (1/pi^0.25) is a scaling factor
+    	t_filterBank(:,i) = (1/pi^0.25) * gaussWindow.*exp(1i*2*pi*x*freqList(i));
+        t_filterBank(:,i) = t_filterBank(:,i) ./ sum(abs(t_filterBank(:,i)));
+    end
+
+%     recip_gsigma = freqList ./ 0.849;
+%     gaussWindow = exp( -0.5*(x'*recip_gsigma).^2 );
+%     sinusoid_matrix = exp(1i*2*pi*x'*freqList);
+%     t_filterBank = (1/pi^0.25) * gaussWindow .* sinusoid_matrix;
+    % nfft = 2^nextpow2(size(t_filterBank,1));
+    % f = Fs*linspace(0,1,size(t_filterBank,1));
+    % t = linspace(0,1,size(t_filterBank,1)) * size(t_filterBank,1) / Fs;
+    f_filterBank = fft(t_filterBank); % move the kernels into frequency space
 end
-% numfreqs = length(freqList);
-% for i=1:numfreqs
-%     % expand/contract the Gaussian window to accomodate lower/higher
-%     % frequences instead of using a constant window width -DL 9/28/2011
-%     
-%     % effective center frequency is f/a
-%     % Setting f = 0.849, gsigma = 0.849/frequency of interest
-%     gsigma = 0.849 / freqList(i);
-%     gaussWindow = exp( -0.5*(x./gsigma).^2 );
-%     gaussWindow = padarray(gaussWindow, [0 numsamples - length(gaussWindow)]);
-%     
-%     % (1/pi^0.25) is a scaling factor
-% 	t_filterBank(:,i) = (1/pi^0.25) * gaussWindow.*exp(1i*2*pi*x*freqList(i));
-% end
-
-recip_gsigma = freqList ./ 0.849;
-gaussWindow = exp( -0.5*(x'*recip_gsigma).^2 );
-sinusoid_matrix = exp(1i*2*pi*x'*freqList);
-t_filterBank = (1/pi^0.25) * gaussWindow .* sinusoid_matrix;
-% nfft = 2^nextpow2(size(t_filterBank,1));
-% f = Fs*linspace(0,1,size(t_filterBank,1));
-% t = linspace(0,1,size(t_filterBank,1)) * size(t_filterBank,1) / Fs;
-f_filterBank = fft(t_filterBank); % move the kernels into frequency space
 
 %% Calculate the Fourier transform of the input signals
 f_data = fft(data);
 
 W = zeros(size(data, 1), size(data, 2), numfreqs); % numsamples x numtrials x numfreqs
-for i=1:numfreqs
-	W(:,:,i) = f_data(:,:);
-end
+% for i=1:numfreqs
+% 	W(:,:,i) = f_data(:,:);
+% end
 
 % For each kernel in the filter bank (# = numfreqs), element-wise
 % multiply the kernel in to each signal, and then IFFT the result, 
 % then store it in an output 3D array W
 
 for i=1:numtrials
+%     W(:,:,i_f) = f_data' * f_filterBank;
 	for j=1:numfreqs
 		W(:,i,j) = f_data(:,i).*f_filterBank(:,j);
 	end

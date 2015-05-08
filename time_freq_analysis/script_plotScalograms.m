@@ -23,8 +23,8 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
                                           
 colLim = [-3 0];
-freq_ticks = [2,8,20,50,80];
-for i_chDB = 1:4%length(chDB_list)
+desired_freq_ticks = [2,8,20,50,80];
+for i_chDB = 1:1%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -71,13 +71,21 @@ for i_chDB = 1:4%length(chDB_list)
                                                      sum(figProps.colSpacing)) / figProps.n;
         t = scalogram_metadata.t; f = scalogram_metadata.f;
         f_idx = 1:length(f);
+        freqTick_idx = zeros(1, length(desired_freq_ticks));
+        freqTick_label = zeros(1, length(desired_freq_ticks));
+        for i_freqTick = 1 : length(desired_freq_ticks)
+            freqTick_idx(i_freqTick) = find(abs(f - desired_freq_ticks(i_freqTick)) == ...
+                                            min(abs(f - desired_freq_ticks(i_freqTick))));
+            freqTick_label(i_freqTick) = round(f(freqTick_idx(i_freqTick)));
+        end
+                                        
 
         numSamps  = length(t); numFreqs = length(f);
         mean_sessionRegionPwr = NaN(numSessions, numRegions, numEvents, numSamps, numFreqs);
             
         numPages = 0;
         for iSession = 1 : numSessions
-            session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms.mat']);
+            session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms']);
             if ~exist(session_scalogramDir,'file'); continue; end
 
             PDFname = fullfile(session_scalogramDir, [sessionList{iSession} '_' trialType '_scalograms.pdf']);
@@ -106,6 +114,10 @@ for i_chDB = 1:4%length(chDB_list)
                 mean_chPower = NaN(numSessionRegionChannels, numEvents, numSamps, numFreqs);
                 
                 numChPlots = 0;
+                figProps.m = regions_per_page;
+                figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
+                                                              figProps.topMargin - botMargin - ...
+                                                              sum(figProps.rowSpacing)) / figProps.m;
                 for iCh = 1 : numSessionRegionChannels
                     ch = sessionRegionChannels{iCh};
                     ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
@@ -151,7 +163,7 @@ for i_chDB = 1:4%length(chDB_list)
                                 toPlot);
                         set(gca,'ydir','normal',...
                                 'xtick',t_ticks,...
-                                'ytick',f_idx(1:16:length(f)));
+                                'ytick',freqTick_idx);%f_idx(1:16:length(f)));
                         
                         if plotRow == 1
                             title(scalogram_metadata.eventList{iEvent});
@@ -159,7 +171,7 @@ for i_chDB = 1:4%length(chDB_list)
                         if iEvent > 1
                             set(gca,'yticklabel',[]);
                         else
-                            set(gca,'yticklabel',round(f(1:16:length(f))));
+                            set(gca,'yticklabel',freqTick_label);%round(f(1:16:length(f))));
                         end
                         
                         if plotRow < figProps.m
@@ -216,20 +228,21 @@ for i_chDB = 1:4%length(chDB_list)
                 for iEvent = 1 : numEvents
                     axes(h_axes(plotRow, iEvent));
                     
-                    toPlot = log(squeeze(mean_sessionRegionPwr(iCh,iRegion,iEvent,:,:)))';
+                    toPlot = log(squeeze(mean_sessionRegionPwr(iSession,iRegion,iEvent,:,:)))';
                     imagesc(scalogram_metadata.t, ...
                             f_idx, ...
                             toPlot);
                     set(gca,'ydir','normal',...
                             'xtick',t_ticks,...
-                            'ytick',freq_ticks);
-%                                 'ytick',round(f(1:16:length(f))));
+                            'ytick',freqTick_idx);%f_idx(1:16:length(f)));
                         
                     if plotRow == 1
                         title(scalogram_metadata.eventList{iEvent});
                     end
                     if iEvent > 1
                         set(gca,'yticklabel',[]);
+                    else
+                        set(gca,'yticklabel',freqTick_label);%round(f(1:16:length(f))));
                     end
 
                     if plotRow < figProps.m
@@ -292,13 +305,15 @@ for i_chDB = 1:4%length(chDB_list)
                         toPlot);
                 set(gca,'ydir','normal',...
                         'xtick',t_ticks,...
-                        'ytick',round(f(1:16:length(f))));
+                        'ytick',freqTick_idx);%round(f(1:16:length(f))));
 
                 if plotRow == 1
                     title(scalogram_metadata.eventList{iEvent});
                 end
                 if iEvent > 1
                     set(gca,'yticklabel',[]);
+                else
+                    set(gca,'yticklabel',freqTick_label);%f_idx(1:16:length(f)));
                 end
 
                 if plotRow < figProps.m

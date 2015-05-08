@@ -23,8 +23,8 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
                                           
 colLim = [-3 0];
-freq_ticks = [2,8,20,50,80];
-for i_chDB = 1:4%length(chDB_list)
+desired_freq_ticks = [2,8,20,50,80];
+for i_chDB = 1:1%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -70,14 +70,18 @@ for i_chDB = 1:4%length(chDB_list)
                                                      2 * sideMargins - ...
                                                      sum(figProps.colSpacing)) / figProps.n;
         t = scalogram_metadata.t; f = scalogram_metadata.f;
-        f_idx = length(f);
+        f_idx = 1:length(f);
+        freqTick_idx = zeros(1, length(desired_freq_ticks));
+        for i_freqTick = 1 : length(desired_freq_ticks)
+            freqTick_idx(i_freqTick) = find(abs(f - desired_freq_ticks(i_freqTick)) == ...
+                                            min(abs(f - desired_freq_ticks(i_freqTick))));
 
         numSamps  = length(t); numFreqs = length(f);
         mean_sessionRegionPwr = NaN(numSessions, numRegions, numEvents, numSamps, numFreqs);
             
         numPages = 0;
         for iSession = 1 : numSessions
-            session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms.mat']);
+            session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms']);
             if ~exist(session_scalogramDir,'file'); continue; end
 
             PDFname = fullfile(session_scalogramDir, [sessionList{iSession} '_' trialType '_scalograms.pdf']);
@@ -106,12 +110,19 @@ for i_chDB = 1:4%length(chDB_list)
                 mean_chPower = NaN(numSessionRegionChannels, numEvents, numSamps, numFreqs);
                 
                 numChPlots = 0;
+                figProps.m = regions_per_page;
+                figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
+                                                              figProps.topMargin - botMargin - ...
+                                                              sum(figProps.rowSpacing)) / figProps.m;
                 for iCh = 1 : numSessionRegionChannels
                     ch = sessionRegionChannels{iCh};
                     ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
 
                     if numSessionRegionChannels < figProps.m
                         figProps.m = numSessionRegionChannels;
+                        figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
+                                                                      figProps.topMargin - botMargin - ...
+                                                                      sum(figProps.rowSpacing)) / figProps.m;
                     end
                     if ~exist(ch_scalogramName,'file');continue;end
                     if ~strcmpi(ch_scalogramName, test_ch_scalogramName)
@@ -122,6 +133,9 @@ for i_chDB = 1:4%length(chDB_list)
                     
                     numChPlots = numChPlots + 1;
                     plotRow = rem(numChPlots,figProps.m);
+                    if plotRow == 0
+                        plotRow = figProps.m;
+                    end
                     if plotRow == 1
                         [h_fig,h_axes] = createFigPanels5(figProps);
                         page_chList = ch.name;
@@ -129,11 +143,12 @@ for i_chDB = 1:4%length(chDB_list)
                     else
                         page_chList = [page_chList ', ' ch.name];
                     end
-                    if plotRow == 0
-                        plotRow = figProps.m;
-                    end
 
-                    mean_chPower(iCh,:,:,:) = squeeze(mean(abs(W).^2,3));
+                    if length(scalogram_metadata.eventList) == 1
+                        mean_chPower(iCh,1,:,:) = squeeze(mean(abs(W).^2,3));
+                    else
+                        mean_chPower(iCh,:,:,:) = squeeze(mean(abs(W).^2,3));
+                    end
                     
                     for iEvent = 1 : length(scalogram_metadata.eventList)
                         axes(h_axes(plotRow, iEvent));
@@ -152,7 +167,7 @@ for i_chDB = 1:4%length(chDB_list)
                         if iEvent > 1
                             set(gca,'yticklabel',[]);
                         else
-                            set(gca,'yticklabel',f(1:16:length(f)));
+                            set(gca,'yticklabel',round(f(1:16:length(f))));
                         end
                         
                         if plotRow < figProps.m
@@ -183,12 +198,21 @@ for i_chDB = 1:4%length(chDB_list)
             % now make a page of plots with the average for each region for
             % the current session
             figProps.m = regions_per_page;
+            figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
+                                                          figProps.topMargin - botMargin - ...
+                                                          sum(figProps.rowSpacing)) / figProps.m;
             for iRegion = 1 : numRegions
                 if numRegions < figProps.m
                     figProps.m = numRegions;
+                    figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
+                                                                  figProps.topMargin - botMargin - ...
+                                                                  sum(figProps.rowSpacing)) / figProps.m;
                 end
                 
                 plotRow = rem(iRegion,figProps.m);
+                if plotRow == 0
+                    plotRow = figProps.m;
+                end
                 if plotRow == 1
                     [h_fig,h_axes] = createFigPanels5(figProps);
                     page_regionList = ROI_list{iRegion};
@@ -196,21 +220,17 @@ for i_chDB = 1:4%length(chDB_list)
                 else
                     page_regionList = [page_regionList ', ' ROI_list{iRegion}];
                 end
-                if plotRow == 0
-                    plotRow = figProps.m;
-                end
                 
                 for iEvent = 1 : numEvents
                     axes(h_axes(plotRow, iEvent));
                     
-                    toPlot = log(squeeze(mean_sessionRegionPwr(iCh,iRegion,iEvent,:,:)))';
+                    toPlot = log(squeeze(mean_sessionRegionPwr(iSession,iRegion,iEvent,:,:)))';
                     imagesc(scalogram_metadata.t, ...
                             f_idx, ...
                             toPlot);
                     set(gca,'ydir','normal',...
                             'xtick',t_ticks,...
-                            'ytick',freq_ticks);
-%                                 'ytick',round(f(1:16:length(f))));
+                            'ytick',f_idx(1:16:length(f)));
                         
                     if plotRow == 1
                         title(scalogram_metadata.eventList{iEvent});
@@ -245,23 +265,29 @@ for i_chDB = 1:4%length(chDB_list)
         % now, average across all session-regions
         PDFname = fullfile(subject_scalogramDir, [implantID '_' trialType '_scalograms.pdf']);
         figProps.m = regions_per_page;
+        figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
+                                                      figProps.topMargin - botMargin - ...
+                                                      sum(figProps.rowSpacing)) / figProps.m;
         for iRegion = 1 : numRegions
             if numRegions < figProps.m
                 figProps.m = numRegions;
+                figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
+                                                              figProps.topMargin - botMargin - ...
+                                                              sum(figProps.rowSpacing)) / figProps.m;
             end
             
             log_meanRegionPower = log(squeeze(mean(mean_sessionRegionPwr(:,iRegion,:,:,:),1)));
 
             plotRow = rem(iRegion,figProps.m);
+            if plotRow == 0
+                plotRow = figProps.m;
+            end
             if plotRow == 1
                 [h_fig,h_axes] = createFigPanels5(figProps);
                 page_regionList = ROI_list{iRegion};
                 numPages = numPages + 1;
             else
                 page_regionList = [page_regionList ', ' ch.name];
-            end
-            if plotRow == 0
-                plotRow = figProps.m;
             end
             
             for iEvent = 1 : numEvents
@@ -280,6 +306,8 @@ for i_chDB = 1:4%length(chDB_list)
                 end
                 if iEvent > 1
                     set(gca,'yticklabel',[]);
+                else
+                    set(gca,'yticklabel',round(f(1:16:length(f))));
                 end
 
                 if plotRow < figProps.m

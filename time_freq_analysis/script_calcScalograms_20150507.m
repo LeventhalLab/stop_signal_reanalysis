@@ -47,7 +47,7 @@ end
 
 
 
-for i_chDB = 1:4%length(chDB_list)
+for i_chDB = 1:1%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -81,7 +81,7 @@ for i_chDB = 1:4%length(chDB_list)
     numSessions = length( sessionList );
     
     for iSession = 1 : numSessions
-        session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms.mat']);
+        session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms']);
         if ~exist(session_scalogramDir,'file')
             mkdir(session_scalogramDir);
         end

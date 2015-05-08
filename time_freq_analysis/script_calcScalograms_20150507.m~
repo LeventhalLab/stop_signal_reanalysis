@@ -6,8 +6,12 @@ scalogramDir = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/trial_scalo
 lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/stop-signal LFPs';
 sample_lfp_name = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/stop-signal LFPs/IM164_LFPs/IM164_20091112_13-56-32.hsdf';
 
+twin_buffer = 1;    % add an extra second before and after each time window to eliminate edge effects
+
 header = getHSDHeader( sample_lfp_name );
 Fs = lfpFs( header );
+scalogram_metadata.Fs = Fs;
+startSample = round(Fs * twin_buffer);
 
 [chDB_list, chDB_fnames] = get_chStructs_for_analysis;
 
@@ -26,13 +30,22 @@ trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'cor
 numTrialTypes = length(trialTypeList);
 eventtWin   = zeros(numTrialTypes, 2);
 eventtWin(1,:) = [-1 2];   % for analysis of all trials
-for iTrialType = 2 : numTrialTypes
-    eventtWin(iTrialType,:) = [-1 1];
-end
-twin_buffer = 1;    % add an extra second before and after each time window to eliminate edge effects
 centerFreqs = logspace(0,2,50);
 numFreqs = length(centerFreqs);
 scalogram_metadata.f = centerFreqs;
+filterBanks = cell(numTrialTypes, 1);
+
+buffered_twin = eventtWin(1,:) + [-twin_buffer, twin_buffer];
+numBufferedSamples = round(range(buffered_twin) * Fs);
+filterBanks{1} = scalogramFilterBank(f, Fs, numBufferedSamples);
+for iTrialType = 2 : numTrialTypes
+    eventtWin(iTrialType,:) = [-1 1];
+    buffered_twin = eventtWin(iTrialType,:) + [-twin_buffer, twin_buffer];
+    numBufferedSamples = round(range(buffered_twin) * Fs);
+    filterBanks{iTrialType} = scalogramFilterBank(f, Fs, numBufferedSamples);
+end
+
+
 
 for i_chDB = 1:4%length(chDB_list)
     
@@ -133,9 +146,8 @@ for i_chDB = 1:4%length(chDB_list)
             lfp_wireNums(i_site) = header.channel(i_site).original_number;
         end
         
-        Fs = lfpFs( header );
-        
-        startSample = round(Fs * twin_buffer);
+%         Fs = lfpFs( header );
+%         startSample = round(Fs * twin_buffer);
         lfpDuration = getHSDlength( 'filename', lfp_fileName );
         numSamples = round(range(twin) * Fs);
         
@@ -245,6 +257,7 @@ for i_chDB = 1:4%length(chDB_list)
 %                     tic
 %                     [full_W,~] = calculateComplexScalograms_EnMasse(lfp_events','Fs',Fs,'freqlist',centerFreqs);
 %                     toc
+                    [full_W,~] = calculateComplexScalograms_EnMasse(lfp_events','filterbank',filterBanks{iTrialType});
                     W(iEvent,:,:,:) = full_W(startSample:startSample + numSamples - 1, :,:);
                     
                 end    % for iEvent...

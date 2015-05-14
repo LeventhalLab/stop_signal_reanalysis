@@ -22,9 +22,12 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               figProps.topMargin - botMargin - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
                                           
-colLim = [-3 0];
+colLim = [-10 -5.0];
 desired_freq_ticks = [2,8,20,50,80];
-for i_chDB = 1:1%length(chDB_list)
+
+cmap = 'jet';
+
+for i_chDB = 1:4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -57,7 +60,7 @@ for i_chDB = 1:1%length(chDB_list)
         
         for iCh = 1 : length(channels)
             ch = channels{iCh};
-            session_scalogramDir = fullfile(subject_scalogramDir,[ch.session '_scalograms.mat']);
+            session_scalogramDir = fullfile(subject_scalogramDir,[ch.session '_scalograms']);
             test_ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
             if ~exist(test_ch_scalogramName,'file');continue;end
             break;
@@ -89,6 +92,7 @@ for i_chDB = 1:1%length(chDB_list)
             if ~exist(session_scalogramDir,'file'); continue; end
 
             PDFname = fullfile(session_scalogramDir, [sessionList{iSession} '_' trialType '_scalograms.pdf']);
+            mean_sessionPowerName = fullfile(session_scalogramDir,[sessionList{iSession} '_' trialType '_meanRegionScalograms.mat']);
             
             fprintf('session %s, %d of %d\n', ...
                 sessionList{iSession}, iSession, numSessions)
@@ -121,7 +125,7 @@ for i_chDB = 1:1%length(chDB_list)
                 for iCh = 1 : numSessionRegionChannels
                     ch = sessionRegionChannels{iCh};
                     ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
-
+                    mean_chPowerName = fullfile(session_scalogramDir,[ch.name '_' trialType '_meanScalograms.mat']);
                     if numSessionRegionChannels < figProps.m
                         figProps.m = numSessionRegionChannels;
                         figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
@@ -154,6 +158,10 @@ for i_chDB = 1:1%length(chDB_list)
                         mean_chPower(iCh,:,:,:) = squeeze(mean(abs(W).^2,3));
                     end
                     
+                    if ~exist(mean_chPowerName, 'file')
+                        save(mean_chPowerName, 'mean_chPower', 'scalogram_metadata');
+                    end
+                    
                     for iEvent = 1 : length(scalogram_metadata.eventList)
                         axes(h_axes(plotRow, iEvent));
                         
@@ -161,8 +169,10 @@ for i_chDB = 1:1%length(chDB_list)
                         imagesc(scalogram_metadata.t, ...
                                 f_idx, ...
                                 toPlot);
+                        colormap(cmap);
                         set(gca,'ydir','normal',...
                                 'xtick',t_ticks,...
+                                'clim',colLim,...
                                 'ytick',freqTick_idx);%f_idx(1:16:length(f)));
                         
                         if plotRow == 1
@@ -183,7 +193,8 @@ for i_chDB = 1:1%length(chDB_list)
                         h_figAxes = createFigAxes(h_fig);
                         axes(h_figAxes);
                         
-                        textStr{1} = [implantID ', log power scalograms, single channels in ' ROI_list{iRegion}];
+                        textStr = cell(1,3);
+                        textStr{1} = [implantID ', ' trialType ', log power scalograms, single channels in ' ROI_list{iRegion}];
                         textStr{2} = page_chList;
                         textStr{3} = ['color limits: ' num2str(colLim(1)) ', ' num2str(colLim(2))];
                         text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
@@ -232,8 +243,10 @@ for i_chDB = 1:1%length(chDB_list)
                     imagesc(scalogram_metadata.t, ...
                             f_idx, ...
                             toPlot);
+                    colormap(cmap);
                     set(gca,'ydir','normal',...
                             'xtick',t_ticks,...
+                            'clim',colLim,...
                             'ytick',freqTick_idx);%f_idx(1:16:length(f)));
                         
                     if plotRow == 1
@@ -253,8 +266,9 @@ for i_chDB = 1:1%length(chDB_list)
                 if plotRow == figProps.m || iRegion == numRegions
                     h_figAxes = createFigAxes(h_fig);
                     axes(h_figAxes);
-
-                    textStr{1} = [implantID ', log power scalograms, averaged across channels for each region'];
+                    
+                    textStr = cell(1,4);
+                    textStr{1} = [implantID ', ' trialType ', log power scalograms, averaged across channels for each region'];
                     textStr{2} = sessionList{iSession};
                     textStr{3} = page_regionList;
                     textStr{4} = ['color limits: ' num2str(colLim(1)) ', ' num2str(colLim(2))];
@@ -270,6 +284,7 @@ for i_chDB = 1:1%length(chDB_list)
         
         % now, average across all session-regions
         PDFname = fullfile(subject_scalogramDir, [implantID '_' trialType '_scalograms.pdf']);
+        mean_subjectPowerName = fullfile(subject_scalogramDir,[implantID '_' trialType '_meanScalograms.mat']);
         figProps.m = regions_per_page;
         figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                                       figProps.topMargin - botMargin - ...
@@ -282,7 +297,7 @@ for i_chDB = 1:1%length(chDB_list)
                                                               sum(figProps.rowSpacing)) / figProps.m;
             end
             
-            log_meanRegionPower = log(squeeze(mean(mean_sessionRegionPwr(:,iRegion,:,:,:),1)));
+            log_meanRegionPower = log(squeeze(nanmean(mean_sessionRegionPwr(:,iRegion,:,:,:),1)));
 
             plotRow = rem(iRegion,figProps.m);
             if plotRow == 0
@@ -303,8 +318,10 @@ for i_chDB = 1:1%length(chDB_list)
                 imagesc(scalogram_metadata.t, ...
                         f_idx, ...
                         toPlot);
+                colormap(cmap);
                 set(gca,'ydir','normal',...
                         'xtick',t_ticks,...
+                        'clim',colLim,...
                         'ytick',freqTick_idx);%round(f(1:16:length(f))));
 
                 if plotRow == 1
@@ -324,8 +341,9 @@ for i_chDB = 1:1%length(chDB_list)
             if plotRow == figProps.m || iRegion == numRegions
                 h_figAxes = createFigAxes(h_fig);
                 axes(h_figAxes);
-
-                textStr{1} = [implantID ', log power scalograms, averaged across channels and sessions for each region'];
+                
+                textStr = cell(1,3);
+                textStr{1} = [implantID ', ' trialType ', log power scalograms, averaged across channels and sessions for each region'];
                 textStr{2} = page_regionList;
                 textStr{3} = ['color limits: ' num2str(colLim(1)) ', ' num2str(colLim(2))];
                 text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
@@ -335,6 +353,17 @@ for i_chDB = 1:1%length(chDB_list)
             end
             
         end    % for iRegion...
+
+        subject_region_metadata.sessionList = sessionList;
+        subject_region_metadata.Fs = scalogram_metadata.Fs;
+        subject_region_metadata.trialType = scalogram_metadata.trialType;
+        subject_region_metadata.t = scalogram_metadata.t;
+        subject_region_metadata.f = scalogram_metadata.f;
+        subject_region_metadata.twin = scalogram_metadata.twin;
+        subject_region_metadata.eventList = scalogram_metadata.eventList;
+        subject_region_metadata.regionList = ROI_list;
+        % may need more metadata, can add them later
+        save(mean_subjectPowerName, 'mean_sessionRegionPwr', 'subject_region_metadata');
         
     end    % for iTrialType...
     

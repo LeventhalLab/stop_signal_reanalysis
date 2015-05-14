@@ -47,7 +47,7 @@ end
 
 
 
-for i_chDB = 1:1%length(chDB_list)
+for i_chDB = 1:4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -82,7 +82,7 @@ for i_chDB = 1:1%length(chDB_list)
     
     for iSession = 1 : numSessions
         session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms']);
-        if ~exist(session_scalogramDir,'file')
+        if ~exist(session_scalogramDir,'dir')
             mkdir(session_scalogramDir);
         end
         fprintf('session %s, %d of %d\n', ...
@@ -240,7 +240,7 @@ for i_chDB = 1:1%length(chDB_list)
                 if numTrials == 0; continue; end
                 
                 ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
-%                 if exist(ch_scalogramName,'file');continue;end
+                if exist(ch_scalogramName,'file');continue;end
                 
                 eventList = eventLists{iTrialType};
                 twin = eventtWin(iTrialType, :);

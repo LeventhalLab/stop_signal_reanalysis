@@ -12,7 +12,7 @@ numRegions = length(ROI_list);
 
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 channels_per_page = 5;
-z_clim = [-3 3];
+z_clim = [-4 4];
 mrl_clim = [0 1e-2];
 % colorLim = [-4 -1];
 
@@ -44,7 +44,7 @@ totalPlotTypes = length(var_to_plot) * (1 + length(phase_freq) + length(amp_freq
 desired_amp_freq_ticks = [10,20,50,80];
 desired_phase_freq_ticks = [2,4,8,16,20];
 
-for i_chDB = 1 : 2%length(chDB_list)
+for i_chDB = 1 : 1%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -70,7 +70,7 @@ for i_chDB = 1 : 2%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length(sessionList);
     
-    for iTrialType = 1 : length(trialTypeList)
+    for iTrialType = 1 : 1%length(trialTypeList)
         trialType = trialTypeList{iTrialType};
         
 %         switch iTrialType
@@ -103,7 +103,7 @@ for i_chDB = 1 : 2%length(chDB_list)
         numEvents = length(phaseAmp_metadata.eventList);
         numSamps  = length(t);
         
-        for iSession = 1 : numSessions
+        for iSession = 1 : 5%numSessions
             
 %             iSession = sessions_to_plot(iPlotSession);
             sprintf('%d of %d sessions, %s', iSession, numSessions, sessionList{iSession})
@@ -149,10 +149,9 @@ for i_chDB = 1 : 2%length(chDB_list)
 
             if exist(region_mean_saveName, 'file'); continue; end  % comment this line out to make plots whether means have been saved or not
         
-            % PUT THE BELOW LINES BACK IN ONCE SURROGATES ARE CALCULATED
-%             phaseAmp_surr_name_mrl = [sessionChannels{1}.name '_surrTrial_t_' trialType '_phase_amp_mrl.mat'];
-%             phaseAmp_surr_name_mrl = fullfile(phaseAmp_sessionDir, phaseAmp_surr_name_mrl);
-%             if ~exist(phaseAmp_surr_name_mrl, 'file'); continue; end
+            phaseAmp_surr_name_mrl = [sessionChannels{1}.name '_' trialType '_phase_amp_Gabor_surrogates.mat'];
+            phaseAmp_surr_name_mrl = fullfile(phaseAmp_sessionDir, phaseAmp_surr_name_mrl);
+            if ~exist(phaseAmp_surr_name_mrl, 'file'); continue; end
                 
             phaseAmp_name_mrl = [sessionChannels{1}.name '_' trialType '_phase_amp_Gabor.mat'];
             phaseAmp_name_mrl = fullfile(phaseAmp_sessionDir, phaseAmp_name_mrl);
@@ -223,17 +222,16 @@ for i_chDB = 1 : 2%length(chDB_list)
                 for iCh = 1 : numCh
     %               iCh
                     ch = regionChannels{iCh};
-                    phaseAmp_name_mrl = [ch.name '_' trialType '_phase_amp_Gabor.mat'];
+                    phaseAmp_name_mrl = [ch.name '_' trialType '_phase_amp_Gabor_surrogates.mat'];
                     phaseAmp_name_mrl = fullfile(phaseAmp_sessionDir, phaseAmp_name_mrl);
                     if ~exist(phaseAmp_name_mrl, 'file'); continue; end
                     
-                    % PUT THIS BACK IN ONCE SURROGATES ARE CALCULATED
-%                     phaseAmp_surr_name_mrl = [ch.name '_surrTrial_t_' trialType '_phase_amp_mrl.mat'];
-%                     phaseAmp_surr_name_mrl = fullfile(phaseAmp_sessionDir, phaseAmp_surr_name_mrl);
-%                     if ~exist(phaseAmp_surr_name_mrl, 'file'); continue; end
+                    phaseAmp_surr_name_mrl = [ch.name '_' trialType '_phase_amp_Gabor_surrogates.mat'];
+                    phaseAmp_surr_name_mrl = fullfile(phaseAmp_sessionDir, phaseAmp_surr_name_mrl);
+                    if ~exist(phaseAmp_surr_name_mrl, 'file'); continue; end
             
                     load( phaseAmp_name_mrl );
-%                     load( phaseAmp_surr_name_mrl );
+                    load( phaseAmp_surr_name_mrl );
 %                     mrv = re_mrv + 1i*im_mrv;
 %                     mrv_z = (abs(mrv) - surrogate_mean) ./ surrogate_std;
 
@@ -261,12 +259,12 @@ for i_chDB = 1 : 2%length(chDB_list)
                     if rowNum == 0; rowNum = channels_per_page; end
 
                     mrl_by_region{iRegion}(iCh, :, :, :, :) = abs(mrv);
-%                     mrl_z_by_region{iRegion}(iCh, :, :, :, :) = (abs(mrv) - surrogate_mean) ./ surrogate_std;
+                    mrl_z_by_region{iRegion}(iCh, :, :, :, :) = (abs(mrv) - surrogate_mean) ./ surrogate_std;
                 
                     if makePlots                             
                         
                         for iVar = 1 : length(var_to_plot)
-                            for iPlotType = 1 : 1%length(plotTypes)
+                            for iPlotType = 1 : length(plotTypes)
                                 for iFreq = 1 : length(plotFreqs{iPlotType})
                                     for iEventType = 1 : numEventTypes
                                         switch plotTypes{iPlotType}
@@ -276,9 +274,9 @@ for i_chDB = 1 : 2%length(chDB_list)
                                                     colorLim = mrl_clim;
                                                     textStr{1} = sprintf('mrl, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                                 else
-%                                                     toPlot = squeeze(mrl_z_by_region{iRegion}(iCh, iEventType, phase_freq_idx(iFreq), :, :));
-%                                                     colorLim = z_clim;
-%                                                     textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                    toPlot = squeeze(mrl_z_by_region{iRegion}(iCh, iEventType, phase_freq_idx(iFreq), :, :));
+                                                    colorLim = z_clim;
+                                                    textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                                 end
                                                 x = t;
                                                 y = amp_f;
@@ -292,12 +290,12 @@ for i_chDB = 1 : 2%length(chDB_list)
                                                     colorLim = mrl_clim;
                                                     textStr{1} = sprintf('mrl, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                                 else
-%                                                     toPlot = squeeze(mrl_z_by_region{iRegion}(iCh, iEventType, :, amp_freq_idx(iFreq), :));
-%                                                     colorLim = z_clim;
-%                                                     textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                    toPlot = squeeze(mrl_z_by_region{iRegion}(iCh, iEventType, :, amp_freq_idx(iFreq), :));
+                                                    colorLim = z_clim;
+                                                    textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                                 end
                                                 x = t;
-                                                y = 1:lenphase_f;
+                                                y = 1:phase_f;
                                                 y_ticks = phase_freqTick_idx;
                                                 x_ticks = t_ticks;
                                                 yticklabel = phase_freqTick_label;
@@ -308,9 +306,9 @@ for i_chDB = 1 : 2%length(chDB_list)
                                                     colorLim = mrl_clim;
                                                     textStr{1} = 'mrl, phase-amplitude coupling, average across time';
                                                 else
-%                                                     toPlot = squeeze(mean(mrl_z_by_region{iRegion}(iCh, iEventType, :, :, :), 5))';
-%                                                     colorLim = z_clim;
-%                                                     textStr{1} = 'mrl z-score, phase-amplitude coupling, average across time';
+                                                    toPlot = squeeze(mean(mrl_z_by_region{iRegion}(iCh, iEventType, :, :, :), 5))';
+                                                    colorLim = z_clim;
+                                                    textStr{1} = 'mrl z-score, phase-amplitude coupling, average across time';
                                                 end
                                                 x = phase_f;
                                                 y = amp_f;
@@ -354,9 +352,9 @@ for i_chDB = 1 : 2%length(chDB_list)
                                         textStr{5} = ['color limits: ' num2str(colorLim(1)) ' to ' num2str(colorLim(2))];
                                         text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
                                         if numPages == 1
-                                            export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters');
+                                            export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-nocrop');
                                         else
-                                            export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append');
+                                            export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append','-nocrop');
                                         end
                                         close(h_fig{iVar, iPlotType}(iFreq));
                                     end
@@ -370,7 +368,7 @@ for i_chDB = 1 : 2%length(chDB_list)
                 end    % for iCh...
                 % create averages within individual brain regions for each session
                 mean_mrl(iRegion, : ,:, :, :) = mean(mrl_by_region{iRegion}, 1);
-%                 mean_mrl_z(iRegion, :, :, :, :) = mean(mrl_z_by_region{iRegion}, 1);
+                mean_mrl_z(iRegion, :, :, :, :) = mean(mrl_z_by_region{iRegion}, 1);
             
             end    % for iRegion...
             
@@ -379,8 +377,8 @@ for i_chDB = 1 : 2%length(chDB_list)
             region_phaseAmp_metadata.num_ch_per_region = num_ch_per_region;
             region_phaseAmp_metadata.phase_f = phase_f;
             region_phaseAmp_metadata.amp_f = amp_f;
-%             save(region_mean_saveName, 'mean_mrl', 'mean_mrl_z', 'region_phaseAmp_metadata');
-            save(region_mean_saveName, 'mean_mrl', 'region_phaseAmp_metadata');
+            save(region_mean_saveName, 'mean_mrl', 'mean_mrl_z', 'region_phaseAmp_metadata');
+%             save(region_mean_saveName, 'mean_mrl', 'region_phaseAmp_metadata');
             
             % create a new page of figures to show the region means for
             % each session
@@ -402,7 +400,7 @@ for i_chDB = 1 : 2%length(chDB_list)
                         page_regionList = ROI_list{iRegion};
                         page_numChList  = ['Number of Channels per Region: ' num2str(num_ch_per_region(iRegion))];
                     else
-                        page_regionList = [page_regionList ', ' regionList{iRegion}];
+                        page_regionList = [page_regionList ', ' ROI_list{iRegion}];
                         page_numChList  = [page_numChList ', ' num2str(num_ch_per_region(iRegion))];
                     end
                     if rowNum == 0; rowNum = channels_per_page; end
@@ -419,9 +417,9 @@ for i_chDB = 1 : 2%length(chDB_list)
                                                 colorLim = mrl_clim;
                                                 textStr{1} = sprintf('mrl, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                             else
-%                                                 toPlot = squeeze(mean_mrl_z(iRegion, iEventType, phase_freq_idx(iFreq), :, :));
-%                                                 colorLim = z_clim;
-%                                                 textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                toPlot = squeeze(mean_mrl_z(iRegion, iEventType, phase_freq_idx(iFreq), :, :));
+                                                colorLim = z_clim;
+                                                textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                             end
                                                 x = t;
                                                 y = amp_f;
@@ -435,9 +433,9 @@ for i_chDB = 1 : 2%length(chDB_list)
                                                 colorLim = mrl_clim;
                                                 textStr{1} = sprintf('mrl, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                             else
-%                                                 toPlot = squeeze(mean_mrl_z(iRegion, iEventType, :, amp_freq_idx(iFreq), :));
-%                                                 colorLim = z_clim;
-%                                                 textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                toPlot = squeeze(mean_mrl_z(iRegion, iEventType, :, amp_freq_idx(iFreq), :));
+                                                colorLim = z_clim;
+                                                textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                             end
                                                 x = t;
                                                 y = phase_f;
@@ -496,7 +494,7 @@ for i_chDB = 1 : 2%length(chDB_list)
                                     textStr{4} = page_numChList;
                                     text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
 
-                                    export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append');
+                                    export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append','-nocrop');
                                     close(h_fig{iVar, iPlotType}(iFreq));
                                 end
 

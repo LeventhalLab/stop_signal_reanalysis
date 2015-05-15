@@ -143,6 +143,11 @@ for i_chDB = 3 : 4%length(chDB_list)
                 phaseAmp_metadata.chName = ch.name;
                 phaseAmp_metadata.region = ch.location.name;
                 
+                ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
+                if ~exist(ch_scalogramName,'file');continue;end
+
+                load(ch_scalogramName);
+
                 phase_angles = angle(W(:,:,:,phase_f_idx));
                 phase_angles(phase_angles < 0) = phase_angles(phase_angles < 0) + 2 * pi;
                 

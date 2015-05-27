@@ -52,8 +52,6 @@ for i_chDB = 1 : 1%length(chDB_list)
     end
     
     implantID = implantID_from_ratID(chDB_list{i_chDB}(1:3));
-    subject_hilbertDir_1Hz = fullfile(hilbert_1Hz_directory, [implantID '_hilbert']);
-    subject_hilbertDir_025Hz = fullfile(hilbert_025Hz_directory, [implantID '_hilbert']);
     
     subject_phaseAmpdir = fullfile(phaseAmp_directory, [implantID '_phase_amp']);
     if ~exist(subject_phaseAmpdir, 'dir')
@@ -112,48 +110,52 @@ for i_chDB = 1 : 1%length(chDB_list)
         phase_freq_idx = zeros(size(phase_freq));
         amp_freq_idx = zeros(size(amp_freq));
         for iFreq = 1 : length(phase_freq)
-            phase_freq_idx(iFreq) = find(low_freqs == phase_freq(iFreq));
+            phase_freq_idx(iFreq) = find(abs(phase_f - phase_freq(iFreq)) == ...
+                                         min(abs(phase_f - phase_freq(iFreq))));
         end
         for iFreq = 1 : length(amp_freq)
-            amp_freq_idx(iFreq) = find(high_freqs == amp_freq(iFreq));
+            amp_freq_idx(iFreq) = find(abs(amp_f - amp_freq(iFreq)) == ...
+                                       min(abs(amp_f - amp_freq(iFreq))));
         end
         
-        mean_mrl_acrossSessions = nan(numSessions, num_allRegions, numEventTypes, length(low_freqs), length(high_freqs), length(t));
-        mean_mrl_z_acrossSessions = nan(numSessions, num_allRegions, numEventTypes, length(low_freqs), length(high_freqs), length(t));
-        numSessions_perRegion = zeros(1, num_allRegions);
+        amp_freqTick_idx = zeros(1, length(desired_amp_freq_ticks));
+        phase_freqTick_idx = zeros(1, length(desired_phase_freq_ticks));
+        amp_freqTick_label = zeros(1, length(desired_amp_freq_ticks));
+        phase_freqTick_label = zeros(1, length(desired_phase_freq_ticks));
+        for i_freqTick = 1 : length(desired_amp_freq_ticks)
+            amp_freqTick_idx(i_freqTick) = find(abs(amp_f - desired_amp_freq_ticks(i_freqTick)) == ...
+                                                min(abs(amp_f - desired_amp_freq_ticks(i_freqTick))));
+            amp_freqTick_label(i_freqTick) = round(amp_f(amp_freqTick_idx(i_freqTick)));
+        end
+        for i_freqTick = 1 : length(desired_phase_freq_ticks)
+            phase_freqTick_idx(i_freqTick) = find(abs(phase_f - desired_phase_freq_ticks(i_freqTick)) == ...
+                                                min(abs(phase_f - desired_phase_freq_ticks(i_freqTick))));
+            phase_freqTick_label(i_freqTick) = round(phase_f(phase_freqTick_idx(i_freqTick)));
+        end
+        t_ticks = [phaseAmp_metadata.eventtWin(1),0,phaseAmp_metadata.eventtWin(2)];
+        
+        mean_mrl_acrossSessions = nan(numSessions, numRegions, numEventTypes, length(phase_f), length(amp_f), length(t));
+        mean_mrl_z_acrossSessions = nan(numSessions, numRegions, numEventTypes, length(phase_f), length(amp_f), length(t));
+        numSessions_perRegion = zeros(1, numRegions);
         for iSession = 1 : numSessions
-            disp(sprintf('analyzing %s, session %d of %d', sessionList{iSession}, iSession, numSessions))
+            fprintf('analyzing %s, session %d of %d\n', sessionList{iSession}, iSession, numSessions)
             phaseAmp_sessionDir = fullfile(subject_phaseAmpdir, sessionList{iSession}, [sessionList{iSession} '_' trialType]);
             if ~exist(phaseAmp_sessionDir, 'dir'); continue; end
-            
-%             hilbert_sessionDir_1Hz = fullfile(subject_hilbertDir_1Hz, sessionList{iSession});
-%             hilbert_sessionDir_025Hz = fullfile(subject_hilbertDir_025Hz, sessionList{iSession});
-            
-%             cp = initChanParams();
-%             cp.session = sessionList{iSession};
-%         
-%             session_chList = extractChannels( cp, channels );
-%             sessionChannels = channels(session_chList);
-        
-%             % exclude EMG, reference channels
-%             cp = initChanParams();
-%             cp.locationSubClass = {'EMG', 'EEGLAM', 'REF'};
-%             sessionChannels = excludeChannels(cp, sessionChannels);
 
-            region_meanName = ['phaseAmp_byRegion_' trialTypeList{iTrialType} '_' sessionList{iSession} '.mat'];
+            region_meanName = ['gaborPhaseAmp_byRegion_' trialTypeList{iTrialType} '_' sessionList{iSession} '.mat'];
             region_meanName = fullfile(phaseAmp_sessionDir, region_meanName);
 
-            if ~exist(region_meanName, 'file'); continue; end  % comment this line out to make plots whether means have been saved or not
+            if ~exist(region_meanName, 'file'); continue; end
             load(region_meanName);
             
             sessionRegionList = region_phaseAmp_metadata.regionList;
             numSessionRegions = length(sessionRegionList);
             
             for iSessionRegion = 1 : numSessionRegions
-                regionIdx = find(strcmpi(sessionRegionList{iSessionRegion}, allRegionList));
+                regionIdx = find(strcmpi(sessionRegionList{iSessionRegion}, ROI_list));
                 if isempty(regionIdx); continue; end
                 
-                disp(sprintf('%s, %d of %d regions', sessionRegionList{iSessionRegion}, iSessionRegion, numSessionRegions))
+                fprintf('%s, %d of %d regions\n', sessionRegionList{iSessionRegion}, iSessionRegion, numSessionRegions)
                 
                 if size(mean_mrl_acrossSessions, 3) == 1    % indexing issue related to "squeezing" too much if there is only one eventType
                     mean_mrl_acrossSessions(iSession, regionIdx, 1, :, :, :) = ...
@@ -172,22 +174,18 @@ for i_chDB = 1 : 1%length(chDB_list)
             end
             
         end    % for iSession...
-        
+       %% 
         mean_mrl_byRegion = squeeze(nanmean(mean_mrl_acrossSessions, 1));
         mean_mrl_z_byRegion = squeeze(nanmean(mean_mrl_z_acrossSessions, 1));
 
         numPages = 0;
-%             mrl_by_region = cell(1, numRegions);
-%             mrl_z_by_region = cell(1, numRegions);
-%             mean_mrl = zeros(numRegions, numEventTypes, length(low_freqs), length(high_freqs), length(t));
-%             mean_mrl_z = zeros(numRegions, numEventTypes, length(low_freqs), length(high_freqs), length(t));
-
         numRegionPlots = 0;
         h_fig = cell(length(var_to_plot), length(plotTypes)); h_axes = cell(length(var_to_plot), length(plotTypes));
-        for iRegion = 1 : num_allRegions
+%%
+        for iRegion = 1 : numRegions
             
             numRegionPlots = numRegionPlots + 1;
-            rowNum = rem(numChPlots, regions_per_page);
+            rowNum = rem(numRegionPlots, regions_per_page);
             if rowNum == 1
                 for iVar = 1 : length(var_to_plot)
                     for iPlotType = 1 : length(plotTypes)
@@ -198,7 +196,7 @@ for i_chDB = 1 : 1%length(chDB_list)
                         end
                     end
                 end
-                page_regionList = allRegionList{iRegion};
+                page_regionList = ROI_list{iRegion};
                 numSessions_perRegionList = num2str(numSessions_perRegion(iRegion));
 %                         page_locList = ch.location.subclass;
                 numPages = numPages + 1;
@@ -209,11 +207,10 @@ for i_chDB = 1 : 1%length(chDB_list)
             end
             if rowNum == 0; rowNum = regions_per_page; end
 
-            for iEventType = 1 : numEventTypes
-
-                for iVar = 1 : length(var_to_plot)
-                    for iPlotType = 1 : length(plotTypes)
-                        for iFreq = 1 : length(plotFreqs{iPlotType})
+            for iVar = 1 : length(var_to_plot)
+                for iPlotType = 1 : length(plotTypes)
+                    for iFreq = 1 : length(plotFreqs{iPlotType})
+                        for iEventType = 1 : numEventTypes
                             switch plotTypes{iPlotType}
                                 case 'const_phase_f',
                                     if strcmpi(var_to_plot{iVar}, 'mrl')
@@ -226,7 +223,11 @@ for i_chDB = 1 : 1%length(chDB_list)
                                         textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                     end
                                     x = t;
-                                    y = high_freqs;
+                                    y = 1:length(amp_f);
+                                    y_ticks = amp_freqTick_idx;
+                                    x_ticks = t_ticks;
+                                    yticklabel = amp_freqTick_label;
+                                    xticklabel = x_ticks;
                                 case 'const_amp_f',
                                     if strcmpi(var_to_plot{iVar}, 'mrl')
                                         toPlot = squeeze(mean_mrl_byRegion(iRegion, iEventType, :, amp_freq_idx(iFreq), :));
@@ -238,7 +239,11 @@ for i_chDB = 1 : 1%length(chDB_list)
                                         textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
                                     end
                                     x = t;
-                                    y = low_freqs;
+                                    y = 1:length(phase_f);
+                                    y_ticks = phase_freqTick_idx;
+                                    x_ticks = t_ticks;
+                                    yticklabel = phase_freqTick_label;
+                                    xticklabel = x_ticks;
                                 case 'averaged_t',
                                     if strcmpi(var_to_plot{iVar}, 'mrl')
                                         toPlot = squeeze(mean(mean_mrl_byRegion(iRegion, iEventType, :, :, :), 5))';
@@ -249,22 +254,34 @@ for i_chDB = 1 : 1%length(chDB_list)
                                         colorLim = z_clim;
                                         textStr{1} = 'mrl z-score, phase-amplitude coupling, average across time';
                                     end
-                                    x = low_freqs;
-                                    y = high_freqs;
+                                    x = 1:length(phase_f);
+                                    y = 1:length(amp_f);
+                                    x_ticks = phase_freqTick_idx;
+                                    y_ticks = amp_freqTick_idx;
+                                    yticklabel = amp_freqTick_label;
+                                    xticklabel = phase_freqTick_label;
                             end
 
                             axes(h_axes{iVar, iPlotType}(iFreq, rowNum, iEventType));
                             imagesc(x,y,toPlot);    % need to check that toPlot is in the correct orientation
-                            set(gca,'ydir','normal','clim',colorLim);
+                            set(gca,'ydir','normal',...
+                                    'clim',colorLim,...
+                                    'xtick',x_ticks,...
+                                    'ytick',y_ticks);
+                            colormap jet;
                                         
                             if rowNum == 1
                                 title(region_phaseAmp_metadata.eventList{iEventType});
                             end
                             if rowNum < regions_per_page
                                 set(gca,'xticklabel',[]);
+                            else
+                                set(gca,'xticklabel',xticklabel);
                             end
                             if iEventType > 1
                                 set(gca,'yticklabel',[]);
+                            else
+                                set(gca,'yticklabel',yticklabel);
                             end
 
                             if (rowNum == regions_per_page || numChPlots == totalSessionChannels)
@@ -283,11 +300,11 @@ for i_chDB = 1 : 1%length(chDB_list)
                                 close(h_fig{iVar, iPlotType}(iFreq));
                             end
 
-                        end    % for iFreq...
-                    end    % for iPlotType...
-                end    % for iVar...
+                        end    % for iEventType...
+                    end    % for iFreq...
+                end    % for iPlotType...
 
-            end    % for iEventType...
+            end    % for iVar...
 
         end    % for iRegion...
             

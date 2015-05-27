@@ -44,6 +44,9 @@ desired_phase_freq_ticks = [2,4,8,16,20];
 
 cmap = 'jet';
 
+if exist('region_phaseAmp_metadata','var')
+    clear region_phaseAmp_metadata;
+end
 for i_chDB = 1 : 1%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary

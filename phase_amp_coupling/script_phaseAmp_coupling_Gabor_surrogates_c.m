@@ -1,4 +1,4 @@
-% script_phaseAmp_coupling_Gabors
+% script_phaseAmp_coupling_Gabor_surrogates
 
 bitOrder = 'b';
 low_freq_range  = [0 21];
@@ -12,9 +12,14 @@ phaseAmp_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase
 ROI_list = {'eegorb','cpu','gp','stn','snr'};
 numRegions = length(ROI_list);
 
+numSurrogates = 200;
+maxSkip = 3;    % in seconds
+minSkip = 0;
+% min and maxSkip are 
+
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
 
-for i_chDB = 1 : 4%length(chDB_list)
+for i_chDB = 3 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -39,6 +44,7 @@ for i_chDB = 1 : 4%length(chDB_list)
     end
     channels = eval( chDB_info.name );
 
+
     subject_phaseAmpdir = fullfile(phaseAmp_directory, [implantID '_phase_amp']);
     if ~exist(subject_phaseAmpdir, 'dir')
         mkdir(subject_phaseAmpdir);
@@ -47,7 +53,7 @@ for i_chDB = 1 : 4%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length( sessionList );
 
-    for iTrialType = 1 : length(trialTypeList)
+    for iTrialType = 2 : 2: length(trialTypeList)
         trialType = trialTypeList{iTrialType};
         
         for iCh = 1 : length(channels)
@@ -59,26 +65,27 @@ for i_chDB = 1 : 4%length(chDB_list)
         end
         load(test_ch_scalogramName);
         t = scalogram_metadata.t; f = scalogram_metadata.f;
-        numSamples = length(t);
-        phaseAmp_metadata.f = f;
-        phaseAmp_metadata.t = t;
-        
-        numSamps  = length(t); numFreqs = length(f);
+        numSamples = length(t); numFreqs = length(f);
+        surrogate_phaseAmp_metadata.f = f;
+        surrogate_phaseAmp_metadata.t = t;
         
         phase_f_idx = (f > low_freq_range(1) & f < low_freq_range(2));
         amp_f_idx   = (f > high_freq_range(1) & f < high_freq_range(2));
         
-        phaseAmp_metadata.phase_f   = f(phase_f_idx);
-        phaseAmp_metadata.amp_f     = f(amp_f_idx);
-        phaseAmp_metadata.eventList = scalogram_metadata.eventList;
-        phaseAmp_metadata.trialType = trialType;
-        phaseAmp_metadata.eventtWin = scalogram_metadata.twin;
-        phaseAmp_metadata.Fs        = scalogram_metadata.Fs;
+        surrogate_phaseAmp_metadata.phase_f   = f(phase_f_idx);
+        surrogate_phaseAmp_metadata.amp_f     = f(amp_f_idx);
+        surrogate_phaseAmp_metadata.eventList = scalogram_metadata.eventList;
+        surrogate_phaseAmp_metadata.trialType = trialType;
+        surrogate_phaseAmp_metadata.eventtWin = scalogram_metadata.twin;
+        surrogate_phaseAmp_metadata.Fs        = scalogram_metadata.Fs;
         
-        num_fphase = length(phaseAmp_metadata.phase_f);
-        num_famp   = length(phaseAmp_metadata.amp_f);
+        minSkipSamps = round(minSkip * surrogate_phaseAmp_metadata.Fs);
+        maxSkipSamps = round(maxSkip * surrogate_phaseAmp_metadata.Fs);
+        skipSampRange = maxSkipSamps - minSkipSamps;
         
-        numEvents = length(phaseAmp_metadata.eventList);
+        num_fphase = length(surrogate_phaseAmp_metadata.phase_f);
+        num_famp   = length(surrogate_phaseAmp_metadata.amp_f);
+        numEvents  = length(surrogate_phaseAmp_metadata.eventList);
 
         if i_chDB == 7 && iTrialType == 1
             startSession = 1;
@@ -88,8 +95,6 @@ for i_chDB = 1 : 4%length(chDB_list)
         for iSession = startSession : numSessions
             session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms']);
             if ~exist(session_scalogramDir,'file'); continue; end
-            
-            fprintf('trialtype: %s, session %s, %d of %d\n', trialType, sessionList{iSession}, iSession, numSessions)
 
             phaseAmp_sessionDir = fullfile(subject_phaseAmpdir, sessionList{iSession}, [sessionList{iSession} '_' trialType]);
             if ~exist(phaseAmp_sessionDir, 'dir')
@@ -127,49 +132,69 @@ for i_chDB = 1 : 4%length(chDB_list)
                 ch = sessionChannels{iCh};
                 if any(ch.wire.markedGood) == 0; continue; end
                 
-                disp(sprintf('%s, %d of %d sessions, %d of %d channels in session %s', ...
+                fprintf('%s, %s, %d of %d sessions, %d of %d channels in session %s\n', ...
+                    trialType, ...
                     ch.name, ...
                     iSession, ...
                     numSessions, ...
                     iCh, ...
                     numCh, ...
-                    sessionList{iSession}));
+                    sessionList{iSession});
                 
-                phaseAmp_name_mrl = [ch.name '_' trialType '_phase_amp_Gabor.mat'];
+                phaseAmp_name_mrl = [ch.name '_' trialType '_phase_amp_Gabor_surrogates.mat'];
                 phaseAmp_name_mrl = fullfile(phaseAmp_sessionDir, phaseAmp_name_mrl);
                 if exist(phaseAmp_name_mrl, 'file'); continue; end
 
-                phaseAmp_metadata.chName = ch.name;
-                phaseAmp_metadata.region = ch.location.name;
-                
                 ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
                 if ~exist(ch_scalogramName,'file');continue;end
 
                 load(ch_scalogramName);
-
+                
+                surrogate_phaseAmp_metadata.chName = ch.name;
+                surrogate_phaseAmp_metadata.region = ch.location.name;
+                
                 phase_angles = angle(W(:,:,:,phase_f_idx));
                 phase_angles(phase_angles < 0) = phase_angles(phase_angles < 0) + 2 * pi;
                 
                 sig_amp = abs(W(:,:,:,amp_f_idx));
+                
+                % randomly pick number of samples to circularly shift the
+                % amplitude component for each surrogate calculation
+                skip = minSkipSamps + ceil(skipSampRange .* rand(numSurrogates,1));
 
-                mrv = NaN(numEvents, num_fphase, num_famp, numSamples);
+                surrogate_mean = zeros(numEvents, num_fphase, num_famp, numSamples);
+                surrogate_std  = zeros(numEvents, num_fphase, num_famp, numSamples);
+                tic
                 for i_fphase = 1 : num_fphase
+                    
                     for i_famp = 1 : num_famp
                         
                         if f(phase_f_idx(i_fphase)) > f(amp_f_idx(i_famp)); continue; end
+                        surrogate_mrl = zeros(numSurrogates, numEvents, numSamples);
                         
-                        if numEvents > 1
-                            phaseAmpfunction = squeeze(sig_amp(:,:,:,i_famp)) .* squeeze(exp(1i*phase_angles(:,:,:,i_fphase)));
-                        else
-                            phaseAmpfunction = (sig_amp(:,:,:,i_famp)) .* (exp(1i*phase_angles(:,:,:,i_fphase)));
-                        end
-                        mrv(:, i_fphase, i_famp, :) = mean(phaseAmpfunction, 3);
-                        
+                        for iSurrogate = 1 : numSurrogates
+                            sig_amp_f = squeeze(sig_amp(:,:,:,i_famp));
+                            if numEvents == 1
+                                sig_amp_f = shiftdim(sig_amp_f, -1);   % make sure there is a dimension for events even if numEvents = 1
+                            end
+                            % sig_amp_f and surr_amp are numEvents x numSamples x numTrials
+                            surr_amp = circshift(sig_amp_f, skip(iSurrogate), 2);
+
+                            if numEvents > 1    % make sure dimensions match for element by element multiplication
+                                phaseAmpfunction = surr_amp .* squeeze(exp(1i*phase_angles(:,:,:,i_fphase)));
+                            else
+                                phaseAmpfunction = surr_amp .* exp(1i*phase_angles(:,:,:,i_fphase));
+                            end
+                            meanTrial = mean(phaseAmpfunction, 3);
+                            surrogate_mrl(iSurrogate, :, :) = abs(meanTrial);              % SHOULD THIS BE ABS?
+                        end    % for iSurrogate...
+                        surrogate_mean(:, i_fphase, i_famp, :) = mean(surrogate_mrl, 1);
+                        surrogate_std(:, i_fphase, i_famp, :) = std(surrogate_mrl, 0, 1);
                     end 
-                end
+                end    % for i_fphase
+                toc
                 
-%                 re_mrv = real(mrv); im_mrv = imag(mrv);
-                save(phaseAmp_name_mrl, 'mrv', 'phaseAmp_metadata');
+                save(phaseAmp_name_mrl, 'surrogate_mean', 'surrogate_std', 'surrogate_phaseAmp_metadata');
 
             end
 

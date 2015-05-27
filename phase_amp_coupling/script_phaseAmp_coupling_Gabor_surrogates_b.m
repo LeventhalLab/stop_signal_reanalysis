@@ -132,7 +132,8 @@ for i_chDB = 3 : 4%length(chDB_list)
                 ch = sessionChannels{iCh};
                 if any(ch.wire.markedGood) == 0; continue; end
                 
-                fprintf('%s, %d of %d sessions, %d of %d channels in session %s\n', ...
+                fprintf('%s, %s, %d of %d sessions, %d of %d channels in session %s\n', ...
+                    trialType, ...
                     ch.name, ...
                     iSession, ...
                     numSessions, ...
@@ -169,7 +170,7 @@ for i_chDB = 3 : 4%length(chDB_list)
                     for i_famp = 1 : num_famp
                         
                         if f(phase_f_idx(i_fphase)) > f(amp_f_idx(i_famp)); continue; end
-                        surrogate_mrl = zeros(numSurrogates, numSamples);
+                        surrogate_mrl = zeros(numSurrogates, numEvents, numSamples);
                         
                         for iSurrogate = 1 : numSurrogates
                             sig_amp_f = squeeze(sig_amp(:,:,:,i_famp));
@@ -185,7 +186,7 @@ for i_chDB = 3 : 4%length(chDB_list)
                                 phaseAmpfunction = surr_amp .* exp(1i*phase_angles(:,:,:,i_fphase));
                             end
                             meanTrial = mean(phaseAmpfunction, 3);
-                            surrogate_mrl(iSurrogate, :) = abs(meanTrial);              % SHOULD THIS BE ABS?
+                            surrogate_mrl(iSurrogate, :, :) = abs(meanTrial);              % SHOULD THIS BE ABS?
                         end    % for iSurrogate...
                         surrogate_mean(:, i_fphase, i_famp, :) = mean(surrogate_mrl, 1);
                         surrogate_std(:, i_fphase, i_famp, :) = std(surrogate_mrl, 0, 1);

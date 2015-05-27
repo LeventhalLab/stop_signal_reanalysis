@@ -21,7 +21,7 @@ figProps.topMargin  = 5;
 figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               figProps.topMargin - botMargin - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
-                                          
+
 colLim = [-10 -5.0];
 desired_freq_ticks = [2,8,20,50,80];
 

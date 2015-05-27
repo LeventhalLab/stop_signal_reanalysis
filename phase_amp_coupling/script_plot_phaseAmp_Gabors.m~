@@ -508,24 +508,14 @@ for i_chDB = 1 : 1%length(chDB_list)
                         end    % for iPLotType
                     end    % for iVar...
                 end    % for iRegion...
-                %%
+                
                 % now merge pdfs for each plot type into a single file
-                % THERE'S A PROBLEM WITH THIS - THE IMAGES SHOW UP
-                % PIXELATED IN THE COMPOSITE FILES, BUT LOOK FINE IN THE
-                % ORIGINAL FILES
-%                 for iVar = 1 : length(var_to_plot)
-%                     for iPlotType = 1 : length(plotTypes)
-%                         for iFreq = 1 : length(plotFreqs{iPlotType})
-%                             full_pdfSaveName = [fig_saveName{iVar, iPlotType}{iFreq} '.pdf'];
-%                             for iPage = 1 : numPages
-%                                 pdf_to_append = [fig_saveName{iVar, iPlotType}{iFreq} '_' num2str(iPage) '.pdf'];
-%                                 
-%                                 append_pdfs(full_pdfSaveName, pdf_to_append);
-%                                 delete(pdf_to_append);
-%                             end
-%                         end
-%                     end
-%                 end
+                for iVar = 1 : length(var_to_plot)
+                    for iPlotType = 1 : length(plotTypes)
+                        for iFreq = 1 : length(plotFreqs{iPlotType})
+                            full_pdfSaveName = [fig_saveName{iVar, iPlotType}{iFreq} '.pdf'];
+                            for iPage = 1 : numPages
+                                pdf_to_append = [fig_saveName{iVar, iPlotType}{iFreq} '_' num2str(numPages) '.pdf'];
                                 
                             
             end    % if makePlots...

@@ -1,35 +1,4 @@
-    %% 
-%         mean_mrl_byRegio÷n = squeeze(nanmean(mean_mrl_acrossSessions, 1));
-        mean_mrl_z_byRegion = squeeze(nanmean(mean_mrl_z_acrossSessions, 1));
-
-        numPages = 0;
-        numRegionPlots = 0;
-        h_fig = cell(length(var_to_plot), length(plotTypes)); h_axes = cell(length(var_to_plot), length(plotTypes));
-%%
-        for iRegion = 1 : numRegions
-            
-            numRegionPlots = numRegionPlots + 1;
-            rowNum = rem(numRegionPlots, regions_per_page);
-            if rowNum == 1
-                for iVar = 1 : length(var_to_plot)
-                    for iPlotType = 1 : length(plotTypes)
-                        h_fig{iVar, iPlotType} = zeros(1, length(plotFreqs{iPlotType}));
-                        h_axes{iVar, iPlotType} = zeros(length(plotFreqs{iPlotType}), figProps.m, figProps.n);
-                        for iFreq = 1 : length(plotFreqs{iPlotType})
-                            [h_fig{iVar, iPlotType}(iFreq), h_axes{iVar, iPlotType}(iFreq, :, :)] = createFigPanels5(figProps);
-                        end
-                    end
-                end
-                page_regionList = ROI_list{iRegion};
-                numSessions_perRegionList = num2str(numSessions_perRegion(iRegion));
-%                         page_locList = ch.location.subclass;
-                numPages = numPages + 1;
-            else
-                page_regionList = [page_regionList ', ' ch.name];
-                numSessions_perRegionList = [numSessions_perRegionList ', ' num2str(numSessions_perRegion(iRegion))];
-%                         page_locList = [page_locList ', ' ch.location.subclass];
-            end
-            if rowNum == 0; rowNum = regions_per_page; end
+     if rowNum == 0; rowNum = regions_per_page; end
 
             for iVar = 1 : length(var_to_plot)
                 for iPlotType = 1 : length(plotTypes)
@@ -130,5 +99,5 @@
 
             end    % for iVar...
 
-        end    % for iRegion...
+
             

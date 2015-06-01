@@ -71,7 +71,7 @@ for i_chDB = 1 : 1%length(chDB_list)
         mat_saveName = [implantID '_phaseAmp_' trialTypeList{iTrialType} '_Gabor_summary.mat'];
         mat_saveName = fullfile(subject_phaseAmpdir, mat_saveName);
         
-        mat_z_saveName = [implantID '_phaseAmp_' trialTypeList{iTrialType} '_z_Gabor_summary.mat'];
+        mat_z_saveName = [implantID '_phaseAmp_' trialTypeList{iTrialType} '_z_summary.mat'];
         mat_z_saveName = fullfile(subject_phaseAmpdir, mat_z_saveName);
         for iVar = 1 : length(var_to_plot)
             for iPlotType = 1 : length(plotTypes)
@@ -97,13 +97,6 @@ for i_chDB = 1 : 1%length(chDB_list)
             load(region_meanName);
             break;
         end
-        
-        phaseAmpSummary_metadata.phase_f = region_phaseAmp_metadata.phase_f;
-        phaseAmpSummary_metadata.amp_f = region_phaseAmp_metadata.amp_f;
-        phaseAmpSummary_metadata.eventList = region_phaseAmp_metadata.eventList;
-        phaseAmpSummary_metadata.eventtWin = region_phaseAmp_metadata.eventtWin;
-        phaseAmpSummary_metadata.Fs = region_phaseAmp_metadata.Fs;
-        phaseAmpSummary_metadata.regionList = region_phaseAmp_metadata.regionList;
         
         eventtWin = region_phaseAmp_metadata.eventtWin;
         numSamps = size(mean_mrl, 5);
@@ -195,14 +188,13 @@ for i_chDB = 1 : 1%length(chDB_list)
         save(mat_saveName, 'mean_mrl_byRegion','phaseAmpSummary_metadata');
         save(mat_z_saveName, 'mean_mrl_z_byRegion','phaseAmpSummary_metadata');
 
-        %%
         numPages = 0;
         numRegionPlots = 0;
         h_fig = cell(length(var_to_plot), length(plotTypes)); h_axes = cell(length(var_to_plot), length(plotTypes));
-
+%%
         for iRegion = 1 : numRegions
             numRegionPlots = numRegionPlots + 1;
-            
+            %%
             rowNum = rem(numRegionPlots, regions_per_page);
             if rowNum == 1
                 for iVar = 1 : length(var_to_plot)
@@ -303,24 +295,23 @@ for i_chDB = 1 : 1%length(chDB_list)
                                 set(gca,'yticklabel',yticklabel);
                             end
 
-                        end    % for iEventType...
-                        
-                        if (rowNum == regions_per_page || numRegionPlots == numRegions)
-                            h_figAxes = createFigAxes(h_fig{iVar, iPlotType}(iFreq));
-                            axes(h_figAxes);
+                            if (rowNum == regions_per_page || numChPlots == totalSessionChannels)
+                                h_figAxes = createFigAxes(h_fig{iVar, iPlotType}(iFreq));
+                                axes(h_figAxes);
 
-                            textStr{2} = ['Trial type: ' region_phaseAmp_metadata.trialType];
-                            textStr{3} = page_regionList;
-                            textStr{4} = ['Number of sessions in average: ' numSessions_perRegionList];
-                            text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
-                            if numPages == 1
-                                export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-nocrop');
-                            else
-                                export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append','-nocrop');
+                                textStr{2} = ['Trial type: ' region_phaseAmp_metadata.trialType];
+                                textStr{3} = page_regionList;
+                                textStr{4} = ['Number of sessions in average: ' numSessions_perRegionList];
+                                text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
+                                if numPages == 1
+                                    export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters');
+                                else
+                                    export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append');
+                                end
+                                close(h_fig{iVar, iPlotType}(iFreq));
                             end
-                            close(h_fig{iVar, iPlotType}(iFreq));
-                        end
-                            
+
+                        end    % for iEventType...
                     end    % for iFreq...
                 end    % for iPlotType...
 

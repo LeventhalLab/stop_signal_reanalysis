@@ -1,3 +1,11 @@
+% try
+%     script_review_phaseAmp_Gabors
+% catch
+%     disp('error in review gabors')
+% end
+% 
+% script_phaseAmp_coupling_Gabor_surrogates_b
+
         %%
         numPages = 0;
         numRegionPlots = 0;

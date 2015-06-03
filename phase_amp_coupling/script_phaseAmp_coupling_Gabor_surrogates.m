@@ -19,7 +19,7 @@ minSkip = 0;
 
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
 
-for i_chDB = 1 : 4%length(chDB_list)
+for i_chDB = 2 : 2%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -56,7 +56,7 @@ for i_chDB = 1 : 4%length(chDB_list)
     if i_chDB==1
         startTrialType = 2;
     else
-        startTrialType = 1;
+        startTrialType = 2;
     end
     for iTrialType = startTrialType : length(trialTypeList)
         trialType = trialTypeList{iTrialType};

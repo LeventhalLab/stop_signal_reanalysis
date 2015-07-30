@@ -73,7 +73,7 @@ for i_chDB = 1 : 1%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length(sessionList);
     
-    for iTrialType = 2 : 2%length(trialTypeList)
+    for iTrialType = 6 : 6%length(trialTypeList)
         trialType = trialTypeList{iTrialType};
         
 %         switch iTrialType
@@ -92,14 +92,15 @@ for i_chDB = 1 : 1%length(chDB_list)
 %             case 7,
 %                 sessions_to_plot = [];
 %         end
-        
+
         for iCh = 1 : length(channels)
             ch = channels{iCh};
-            session_paDir = fullfile(subject_phaseAmpdir,sessionList{1},[sessionList{1} '_' trialType]);
+            session_paDir = fullfile(subject_phaseAmpdir,ch.session,[ch.session '_' trialType]);
             test_paName = fullfile(session_paDir,[ch.name '_' trialType '_phase_amp_Gabor.mat']);
             if ~exist(test_paName,'file');continue;end
             break;
         end
+        
         load(test_paName);
         t = phaseAmp_metadata.t; f = phaseAmp_metadata.f;
         phase_f = phaseAmp_metadata.phase_f; amp_f = phaseAmp_metadata.amp_f;

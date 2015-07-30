@@ -19,7 +19,8 @@ minSkip = 0;
 
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
 
-for i_chDB = 3 : 4%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
+    if i_chDB == 2;continue;end
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -53,7 +54,7 @@ for i_chDB = 3 : 4%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length( sessionList );
 
-    for iTrialType = 2 : length(trialTypeList)
+    for iTrialType = 1 : length(trialTypeList)
         trialType = trialTypeList{iTrialType};
         
         for iCh = 1 : length(channels)
@@ -92,7 +93,7 @@ for i_chDB = 3 : 4%length(chDB_list)
         else
             startSession = 1;
         end
-        for iSession = startSession : numSessions
+        for iSession = 1 : numSessions
             session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms']);
             if ~exist(session_scalogramDir,'file'); continue; end
 

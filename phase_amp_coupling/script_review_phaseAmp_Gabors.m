@@ -42,7 +42,7 @@ totalPlotTypes = length(var_to_plot) * (1 + length(phase_freq) + length(amp_freq
 desired_amp_freq_ticks = [10,20,50,80];    % check that these frequencies are the ones actually being marked
 desired_phase_freq_ticks = [2,4,8,16,20];
 
-for i_chDB = 1 : 1%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -64,15 +64,20 @@ for i_chDB = 1 : 1%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length(sessionList);  
     
-    for iTrialType = 2 : 2%length(trialTypeList)
+    for iTrialType = 1 : length(trialTypeList)
         trialType = trialTypeList{iTrialType};
 
         fig_saveName = cell(length(var_to_plot), length(plotTypes));
         mat_saveName = [implantID '_phaseAmp_' trialTypeList{iTrialType} '_Gabor_summary.mat'];
-        mat_saveName = fullfile(subject_phaseAmpdir, mat_saveName);
+        subject_trialType_dir = fullfile(subject_phaseAmpdir, [implantID '_phaseAmp_' trialType '_Gabors']);
+        if ~exist(subject_trialType_dir,'dir')
+            mkdir(subject_trialType_dir);
+        end
+        mat_saveName = fullfile(subject_trialType_dir, mat_saveName);
+        if exist(mat_saveName,'file');continue;end
         
         mat_z_saveName = [implantID '_phaseAmp_' trialTypeList{iTrialType} '_z_Gabor_summary.mat'];
-        mat_z_saveName = fullfile(subject_phaseAmpdir, mat_z_saveName);
+        mat_z_saveName = fullfile(subject_trialType_dir, mat_z_saveName);
         for iVar = 1 : length(var_to_plot)
             for iPlotType = 1 : length(plotTypes)
                 fig_saveName{iVar, iPlotType} = cell(1,length(plotFreqs{iPlotType}));
@@ -81,7 +86,7 @@ for i_chDB = 1 : 1%length(chDB_list)
                     freqStr = sprintf('%04.0f',plotFreqs{iPlotType}(iFreq));
                     fig_saveName{iVar, iPlotType}{iFreq} = ...
                         ['phaseAmp_' trialTypeList{iTrialType} '_' var_to_plot{iVar} '_' plotTypes{iPlotType} '_' freqStr '_Gabor.pdf'];
-                    fig_saveName{iVar, iPlotType}{iFreq} = fullfile(subject_phaseAmpdir, fig_saveName{iVar, iPlotType}{iFreq});
+                    fig_saveName{iVar, iPlotType}{iFreq} = fullfile(subject_trialType_dir, fig_saveName{iVar, iPlotType}{iFreq});
                 end
 
             end    % for iPlotType...
@@ -219,7 +224,7 @@ for i_chDB = 1 : 1%length(chDB_list)
 %                         page_locList = ch.location.subclass;
                 numPages = numPages + 1;
             else
-                page_regionList = [page_regionList ', ' ch.name];
+                page_regionList = [page_regionList ', ' ROI_list{iRegion}];
                 numSessions_perRegionList = [numSessions_perRegionList ', ' num2str(numSessions_perRegion(iRegion))];
 %                         page_locList = [page_locList ', ' ch.location.subclass];
             end

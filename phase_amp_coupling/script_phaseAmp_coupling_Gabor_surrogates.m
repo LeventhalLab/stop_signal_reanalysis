@@ -53,10 +53,10 @@ for i_chDB = 2 : 2%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length( sessionList );
 
-    if i_chDB==1
-        startTrialType = 2;
+    if i_chDB==2
+        startTrialType = 7;
     else
-        startTrialType = 2;
+        startTrialType = 1;
     end
     for iTrialType = startTrialType : length(trialTypeList)
         trialType = trialTypeList{iTrialType};

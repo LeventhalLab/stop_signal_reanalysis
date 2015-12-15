@@ -49,7 +49,7 @@ for iTrialType = 2 : numTrialTypes
     filterBanks{iTrialType} = scalogramFilterBank(f, Fs, numBufferedSamples);
 end
 
-for i_chDB = 4:length(chDB_list)
+for i_chDB = 1:4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -268,7 +268,7 @@ for i_chDB = 4:length(chDB_list)
                 end    % for iEvent...
                 
                 save(ch_scalogramName, 'W', 'scalogram_metadata');
-%                 save(ch_scalogramName_md, 'scalogram_metadata');
+                save(ch_scalogramName_md, 'scalogram_metadata');
 %                 fid = fopen(ch_scalogramName, 'w', machineFormat);
 %                 fwrite(fid, real(W), scalogram_metadata.precision);
 %                 fwrite(fid, imag(W), scalogram_metadata.precision);

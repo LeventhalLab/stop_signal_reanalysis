@@ -1,0 +1,127 @@
+function hsd_spikesort_preprocessing(varargin)
+%
+% usage: 
+%
+% INPUTS:
+%
+% VARARGINS:
+%
+% OUTPUTS:
+
+fn = '';
+targetDir = '';
+machineFormat = 'b';
+dataType = 'int16';
+Fs = 30000;   % assume human data if no header
+wires = {};
+tetrodes = [];
+refs = [];   % stereotrodes
+
+for iarg = 1 : 2 : nargin
+    
+    switch lower(varargin{iarg})
+        case 'hsdname',
+            fn = varargin{iarg + 1};
+        case 'targetdir',
+            targetDir = varargin{iarg + 1};
+        case 'wires',
+            wires{1} = varargin{iarg + 1};
+        case 'machineformat',
+            machineFormat = varargin{iarg + 1};
+        case 'datatype',
+            dataType = varargin{iarg + 1};
+        case 'fs',
+            Fs = varargin{iarg + 1};
+        case 'tetrode',
+            tetrodes = varargin{iarg + 1};
+        case 'ref',
+            tetrodes = varargin{iarg + 1};
+
+    end
+    
+end
+
+if isempty(fn)
+    [fname, pn, ~] = uigetfile('*.hsd');
+    fn = fullfile(pn, fname);
+else
+    [pn, fname, ~, ~] = fileparts(fn);
+end
+if isempty(targetDir)
+    targetDir = uigetdir(pn);
+end
+
+if ~targetDir
+    disp('no target directory');
+    return;
+end
+
+if ~isdir(targetDir)
+    mkdir(targetDir);
+end
+
+hasHeader = checkHSDheader( fn );
+
+if hasHeader   % get Fs, etc from hsd header if header present
+    header = getHSDHeader( fn );
+    ch = header.channel;
+    numCh = length(ch);
+    chWireList = [ch.original_number];   % list of wire numbers (ie, 1-81)
+    chTypes = [ch.channel_type];           % list of channel types for each wire
+                                                             %   1- tetrode
+                                                             %   2- ref (stereotrode)
+                                                             %   3- eeg/emg/true reference
+    chNums = [ch.channel_number];      % list of channel numbers (ie, tetrode 7, EEG 2, etc.)
+    wireNums = [ch.wire_number];         % wire number for a specific channel (ie, tetrode 7, wire 2)
+    Fs = header.main.sampling_rate;
+    dataOffset = header.dataOffset;
+    
+    recordingType = header.recordingType;
+    
+    if ~isempty(tetrodes) || ~isempty(refs)
+        wires = [];   % override wire list with tetrodes, refs, eegs
+    end
+    
+    if ~isempty(tetrodes)
+        validTypes = (chTypes == 1);  % find all tetrodes
+        valid_chNums = false(1, length(chNums));
+        for iTet = 1 : length(tetrodes)
+            valid_chNums = (valid_chNums | (chNums == tetrodes(iTet)));
+            wires{iTet} = chWireList(validTypes | chNums == 
+        end
+        validWires = valid_chNums | validTypes;
+        wires = chWireList(validWires);
+    end
+        
+    if ~isempty(refs)
+        validTypes = (chTypes == 2);  % find all stereotrodes
+        valid_chNums = false(1, length(chNums));
+        for iRef = 1 : length(refs)
+            valid_chNums = (valid_chNums | chNums == refs(iRef));
+        end
+        validWires = valid_chNums | validTypes;
+        wires = [wires chWireList(validWires)];
+    end
+    
+    if isempty(wires)
+        wires  = chWireList;
+        ch_idx = 1 : numCh;
+    else
+        % figure out which channel indices to get
+        ch_idx = [];
+        for iWire = 1 : length(wires)
+            curIdx = (chWireList == wires(iWire));
+            if any(chWireList == wires(iWire))
+                ch_idx = [ch_idx find(curIdx)];
+            end
+        end
+    end
+    
+    else    % no header in .hsd file
+        numCh = 1;
+        wires = 1;
+        dataOffset = 0;
+        
+        saveName{1} = fullfile(targetDir, [fname  '.hsdw']);
+    end
+end

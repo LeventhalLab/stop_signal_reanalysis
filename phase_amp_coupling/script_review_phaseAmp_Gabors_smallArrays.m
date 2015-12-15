@@ -154,8 +154,8 @@ for i_chDB = 4 : 4%length(chDB_list)
         % NEED TO FIGURE OUT HOW TO DO THESE CALCULATIONS PIECE-WISE TO
         % PRESERVE MEMORY; WILL PROBABLY MAKE THIS RUN FASTER IN GENERAL,
         % ANYWAY
-        mean_mrl_acrossSessions = nan(numSessions, numRegions, numEventTypes, length(phase_f), length(amp_f), length(t));
-        mean_mrl_z_acrossSessions = nan(numSessions, numRegions, numEventTypes, length(phase_f), length(amp_f), length(t));
+        mean_mrl_acrossSessions = zeros(numRegions, numEventTypes, length(phase_f), length(amp_f), length(t));
+        mean_mrl_z_acrossSessions = zeros(numRegions, numEventTypes, length(phase_f), length(amp_f), length(t));
         numSessions_perRegion = zeros(1, numRegions);
         for iSession = 1 : numSessions
             fprintf('analyzing %s, session %d of %d\n', sessionList{iSession}, iSession, numSessions)
@@ -167,7 +167,11 @@ for i_chDB = 4 : 4%length(chDB_list)
 
             if ~exist(region_meanName, 'file'); continue; end
             load(region_meanName);
-            
+            % this file contains:
+            %   mean_mrl - average mean resultant vector. matrix is 
+            %       numRegions x numEvents x numPhaseFreqs x numAmpFreqs x time
+            %   mean_mrl_z - same as mean_mrl, but z-scored
+            %   region_phaseAmp_metadata
             sessionRegionList = region_phaseAmp_metadata.regionList;
             numSessionRegions = length(sessionRegionList);
             
@@ -177,15 +181,24 @@ for i_chDB = 4 : 4%length(chDB_list)
                 
                 fprintf('%s, %d of %d regions\n', sessionRegionList{iSessionRegion}, iSessionRegion, numSessionRegions)
                 
+                temp = squeeze(mean_mrl(iSessionRegion,:,:,:,:));
+                temp_z = squeeze(mean_mrl_z(iSessionRegion,:,:,:,:));
+                if any(isnan(temp(:))) || any(isnan(temp_z(:)))   % if there are any NaNs for the current session-region, skip adding it into the mean
+                    continue;
+                end
                 if size(mean_mrl_acrossSessions, 3) == 1    % indexing issue related to "squeezing" too much if there is only one eventType
-                    mean_mrl_acrossSessions(iSession, regionIdx, 1, :, :, :) = ...
+                    mean_mrl_acrossSessions(regionIdx, 1, :, :, :) = ...
+                        mean_mrl_acrossSessions(regionIdx, 1, :, :, :) + ...
                         squeeze(mean_mrl(iSessionRegion, :, :, :, :));
-                    mean_mrl_z_acrossSessions(iSession, regionIdx, 1, :, :, :) = ...
+                    mean_mrl_z_acrossSessions(regionIdx, 1, :, :, :) = ...
+                        mean_mrl_z_acrossSessions(regionIdx, 1, :, :, :) + ...
                         squeeze(mean_mrl_z(iSessionRegion, :, :, :, :));
                 else
-                    mean_mrl_acrossSessions(iSession, regionIdx, :, :, :, :) = ...
+                    mean_mrl_acrossSessions(regionIdx, :, :, :, :) = ...
+                        squeeze(mean_mrl_acrossSessions(regionIdx, :, :, :, :)) + ...
                         squeeze(mean_mrl(iSessionRegion, :, :, :, :));
-                    mean_mrl_z_acrossSessions(iSession, regionIdx, :, :, :, :) = ...
+                    mean_mrl_z_acrossSessions(regionIdx, :, :, :, :) = ...
+                        squeeze(mean_mrl_z_acrossSessions(regionIdx, :, :, :, :)) + ...
                         squeeze(mean_mrl_z(iSessionRegion, :, :, :, :));
                 end
                 
@@ -195,9 +208,14 @@ for i_chDB = 4 : 4%length(chDB_list)
             
         end    % for iSession...
        %% 
-        mean_mrl_byRegion = squeeze(nanmean(mean_mrl_acrossSessions, 1));
-        mean_mrl_z_byRegion = squeeze(nanmean(mean_mrl_z_acrossSessions, 1));
-        
+%         mean_mrl_byRegion = squeeze(nanmean(mean_mrl_acrossSessions,1));% left over from older version where a giant array was allocated, but turns out we don't have enough memory for that
+%         mean_mrl_z_byRegion = squeeze(nanmean(mean_mrl_z_acrossSessions, 1));
+        mean_mrl_byRegion = zeros(numRegions, numEventTypes, length(phase_f), length(amp_f), length(t));
+        mean_mrl_z_byRegion = zeros(numRegions, numEventTypes, length(phase_f), length(amp_f), length(t));
+        for iRegion = 1 : length(ROI_list)
+            mean_mrl_byRegion(iRegion,:,:,:,:) = mean_mrl_acrossSessions(iRegion,:,:,:,:) / numSessions_perRegion(iRegion);
+            mean_mrl_z_byRegion(iRegion,:,:,:,:) = mean_mrl_z_acrossSessions(iRegion,:,:,:,:) / numSessions_perRegion(iRegion);
+        end
         phaseAmpSummary_metadata.numSessions_perRegion = numSessions_perRegion;
         phaseAmpSummary_metadata.numSessionsComplete = iSession;
         save(mat_saveName, 'mean_mrl_byRegion','phaseAmpSummary_metadata');

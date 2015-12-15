@@ -1,0 +1,28 @@
+function make_hsdh_from_hsd( hsdFile, targetDir )
+%
+% usage: make_hsdh_from_hsd( hsdFile, targetDir )
+%
+
+if ~iscell(hsdFile)
+    hsdFile = cellstr(hsdFile);    
+end
+if ~iscell(targetDir)
+    targetDir = cellstr(targetDir);
+end
+
+if length(targetDir) ~= length(hsdFile)
+    temp = targetDir{1};
+    clear targetDir
+    for i = 1 : length(hsdFile)
+        targetDir{i} = temp;
+    end
+end
+for ihsd = 1 : length(hsdFile)
+    hsdHeader = getHSDHeader( hsdFile{ihsd} );
+
+    [~, fname, ext, ~] = fileparts( hsdFile{ihsd} );
+    
+    hsdh_fn = fullfile(targetDir{ihsd}, [hsdFile{ihsd} 'h']);
+
+    writeHSDheader( hsdh_fn, hsdHeader);
+end

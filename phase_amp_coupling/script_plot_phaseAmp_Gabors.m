@@ -47,7 +47,7 @@ cmap = 'jet';
 if exist('region_phaseAmp_metadata','var')
     clear region_phaseAmp_metadata;
 end
-for i_chDB = 1 : 1%length(chDB_list)
+for i_chDB = 2 : 2%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -73,7 +73,7 @@ for i_chDB = 1 : 1%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length(sessionList);
     
-    for iTrialType = 6 : 6%length(trialTypeList)
+    for iTrialType = 1 : 1%length(trialTypeList)
         trialType = trialTypeList{iTrialType};
         
 %         switch iTrialType

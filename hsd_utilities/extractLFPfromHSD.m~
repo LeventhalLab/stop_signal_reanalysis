@@ -1,0 +1,63 @@
+function extractLFPfromHSD(hsdName, varargin)
+
+targetFs = 500;
+filtOrder = 1000;
+dataType = 'int16';
+saveDir = '';
+openDirStart = '';
+HSDblockSize = 100000;
+overwriteOldLFP = 0;
+
+% function to extract LFPs for a channel structure using the requested
+% parameters (default target sampling rate 500 Hz)
+
+for iarg = 1 : 2 : nargin - 1
+    switch lower(varargin{iarg})
+        case 'targetfs',
+            targetFs = varargin{iarg + 1};
+        case 'savedir',
+            saveDir = varargin{iarg + 1};
+        case 'opendir',
+            openDirStart = varargin{iarg + 1};
+        case 'filterorder',
+            filtOrder = varargin{iarg + 1};
+        case 'datatype',
+            dataType = varargin{iarg + 1};
+        case 'blocksize',
+            HSDblockSize = varargin{iarg + 1};
+        case 'overwritelfp',
+            overwriteOldLFP = varargin{iarg + 1};
+    end
+end
+
+bytes_per_sample = getBytesPerSample(dataType);
+openDir = openDirStart;
+
+
+
+LFPfn = [HSDfn ext 'f'];
+
+if ~isempty(saveDir)
+    pn = saveDir;
+end
+
+if exist(fullfile(pn, LFPfn), 'file') && ~overwriteOldLFP
+    disp(['File ' fullfile(pn, LFPfn) ' already exists.']);
+    return;
+end
+
+hsdHeader = getHSDHeader(hsdName);
+hsdFs = hsdHeader.main.sampling_rate;
+dataOffset = hsdHeader.dataOffset;
+numHSDchannels = hsdHeader.main.num_channels;
+hsdInfo = dir(hsdName);
+numHSDsamples = (hsdInfo.bytes - dataOffset) / (numHSDchannels * bytes_per_sample);
+
+r = round(hsdFs / targetFs);
+lfpFs = hsdFs / r;
+overlapSize = ceil(filtOrder / r) * r;
+
+lfpHeader = hsdHeader;
+lfpHeader.main.sampling_rate = uint16(round(lfpFs));
+lfpHeader.comment = ['HSD downsampled by ' num2str(r) ' from ' num2str(hsdFs)];
+lfpHeader.dataFilename = LFPfn;

@@ -49,7 +49,7 @@ for iTrialType = 2 : numTrialTypes
     filterBanks{iTrialType} = scalogramFilterBank(f, Fs, numBufferedSamples);
 end
 
-for i_chDB = 4:length(chDB_list)
+for i_chDB = 2:2%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -71,6 +71,8 @@ for i_chDB = 4:length(chDB_list)
     
 %     lfp_directory = fullfile(lfp_root, [implantID '_LFPs']);
     lfp_directory = fullfile(lfp_root, [implantID '_HF_LFPs']);
+    if ~exist(lfp_directory,'dir'); continue; end
+    
     cd(lfp_directory);
     
     if i_chDB < 5
@@ -83,7 +85,12 @@ for i_chDB = 4:length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length( sessionList );
     
-    for iSession = 1 : numSessions
+    if i_chDB==2
+        startSession=27;
+    else
+        startSession = 1;
+    end
+    for iSession = startSession : numSessions
         session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms']);
         if ~exist(session_scalogramDir,'dir')
             mkdir(session_scalogramDir);
@@ -267,7 +274,7 @@ for i_chDB = 4:length(chDB_list)
                     
                 end    % for iEvent...
                 
-                save(ch_scalogramName, 'W', 'scalogram_metadata');
+                save(ch_scalogramName, 'W', 'scalogram_metadata','-v7.3');
 %                 save(ch_scalogramName_md, 'scalogram_metadata');
 %                 fid = fopen(ch_scalogramName, 'w', machineFormat);
 %                 fwrite(fid, real(W), scalogram_metadata.precision);

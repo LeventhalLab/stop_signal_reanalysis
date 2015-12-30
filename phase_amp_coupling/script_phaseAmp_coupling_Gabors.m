@@ -1,8 +1,8 @@
 % script_phaseAmp_coupling_Gabors
 
 bitOrder = 'b';
-low_freq_range  = [0 21];
-high_freq_range = [10 101];
+low_freq_range  = [0 100];
+high_freq_range = [10 550];
 
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 scalogramDir = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/trial_scalograms';
@@ -14,7 +14,7 @@ numRegions = length(ROI_list);
 
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
 
-for i_chDB = 1 : 4%length(chDB_list)
+for i_chDB = 1 : length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -57,6 +57,7 @@ for i_chDB = 1 : 4%length(chDB_list)
             if ~exist(test_ch_scalogramName,'file');continue;end
             break;
         end
+        if ~exist(test_ch_scalogramName,'file');continue;end
         load(test_ch_scalogramName);
         t = scalogram_metadata.t; f = scalogram_metadata.f;
         numSamples = length(t);
@@ -65,8 +66,8 @@ for i_chDB = 1 : 4%length(chDB_list)
         
         numSamps  = length(t); numFreqs = length(f);
         
-        phase_f_idx = (f > low_freq_range(1) & f < low_freq_range(2));
-        amp_f_idx   = (f > high_freq_range(1) & f < high_freq_range(2));
+        phase_f_idx = find(f > low_freq_range(1) & f < low_freq_range(2));
+        amp_f_idx   = find(f > high_freq_range(1) & f < high_freq_range(2));
         
         phaseAmp_metadata.phase_f   = f(phase_f_idx);
         phaseAmp_metadata.amp_f     = f(amp_f_idx);
@@ -156,7 +157,7 @@ for i_chDB = 1 : 4%length(chDB_list)
                 for i_fphase = 1 : num_fphase
                     for i_famp = 1 : num_famp
                         
-                        if f(phase_f_idx(i_fphase)) > f(amp_f_idx(i_famp)); continue; end
+                        if f(phase_f_idx(i_fphase)) >= f(amp_f_idx(i_famp)); continue; end
                         
                         if numEvents > 1
                             phaseAmpfunction = squeeze(sig_amp(:,:,:,i_famp)) .* squeeze(exp(1i*phase_angles(:,:,:,i_fphase)));

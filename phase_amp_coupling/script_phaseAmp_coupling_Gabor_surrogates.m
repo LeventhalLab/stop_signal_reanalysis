@@ -1,8 +1,8 @@
 % script_phaseAmp_coupling_Gabor_surrogates
 
 bitOrder = 'b';
-low_freq_range  = [0 21];
-high_freq_range = [10 101];
+low_freq_range  = [0 100];
+high_freq_range = [10 550];
 
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 scalogramDir = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/trial_scalograms';
@@ -19,7 +19,7 @@ minSkip = 0;
 
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
 
-for i_chDB = 2 : 2%length(chDB_list)
+for i_chDB = 1 : 2%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -53,8 +53,8 @@ for i_chDB = 2 : 2%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length( sessionList );
 
-    if i_chDB==2
-        startTrialType = 7;
+    if i_chDB==1
+        startTrialType = 1;
     else
         startTrialType = 1;
     end
@@ -74,8 +74,8 @@ for i_chDB = 2 : 2%length(chDB_list)
         surrogate_phaseAmp_metadata.f = f;
         surrogate_phaseAmp_metadata.t = t;
         
-        phase_f_idx = (f > low_freq_range(1) & f < low_freq_range(2));
-        amp_f_idx   = (f > high_freq_range(1) & f < high_freq_range(2));
+        phase_f_idx = find(f > low_freq_range(1) & f < low_freq_range(2));
+        amp_f_idx   = find(f > high_freq_range(1) & f < high_freq_range(2));
         
         surrogate_phaseAmp_metadata.phase_f   = f(phase_f_idx);
         surrogate_phaseAmp_metadata.amp_f     = f(amp_f_idx);
@@ -174,7 +174,7 @@ for i_chDB = 2 : 2%length(chDB_list)
                     
                     for i_famp = 1 : num_famp
                         
-                        if f(phase_f_idx(i_fphase)) > f(amp_f_idx(i_famp)); continue; end
+                        if f(phase_f_idx(i_fphase)) >= f(amp_f_idx(i_famp)); continue; end
                         surrogate_mrl = zeros(numSurrogates, numEvents, numSamples);
                         
                         for iSurrogate = 1 : numSurrogates

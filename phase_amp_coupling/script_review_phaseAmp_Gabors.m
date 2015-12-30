@@ -42,7 +42,7 @@ totalPlotTypes = length(var_to_plot) * (1 + length(phase_freq) + length(amp_freq
 desired_amp_freq_ticks = [10,20,50,80];    % check that these frequencies are the ones actually being marked
 desired_phase_freq_ticks = [2,4,8,16,20];
 
-for i_chDB = 2 : 2%length(chDB_list)
+for i_chDB = 1 : 1%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -64,7 +64,7 @@ for i_chDB = 2 : 2%length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length(sessionList);  
     
-    for iTrialType = 1 : length(trialTypeList)
+    for iTrialType = 1 : 1%length(trialTypeList)
         trialType = trialTypeList{iTrialType};
 
         fig_saveName = cell(length(var_to_plot), length(plotTypes));

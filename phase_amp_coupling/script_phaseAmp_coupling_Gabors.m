@@ -14,7 +14,7 @@ numRegions = length(ROI_list);
 
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
 
-for i_chDB = 1 : length(chDB_list)
+for i_chDB = 5 : length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')

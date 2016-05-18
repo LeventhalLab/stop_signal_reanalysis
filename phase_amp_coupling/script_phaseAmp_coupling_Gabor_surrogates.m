@@ -19,7 +19,7 @@ minSkip = 0;
 
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
 
-for i_chDB = 1 : 2%length(chDB_list)
+for i_chDB = 5 : length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -68,6 +68,8 @@ for i_chDB = 1 : 2%length(chDB_list)
             if ~exist(test_ch_scalogramName,'file');continue;end
             break;
         end
+        if iCh == length(channels); continue; end
+        
         load(test_ch_scalogramName);
         t = scalogram_metadata.t; f = scalogram_metadata.f;
         numSamples = length(t); numFreqs = length(f);

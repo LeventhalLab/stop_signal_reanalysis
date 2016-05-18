@@ -47,7 +47,7 @@ cmap = 'jet';
 if exist('region_phaseAmp_metadata','var')
     clear region_phaseAmp_metadata;
 end
-for i_chDB = 1 : 1%length(chDB_list)
+for i_chDB = 5 : length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')

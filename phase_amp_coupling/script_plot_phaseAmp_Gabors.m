@@ -119,7 +119,7 @@ for i_chDB = 5 : length(chDB_list)
             for iVar = 1 : length(var_to_plot)
                 for iPlotType = 1 : length(plotTypes)
                     fig_saveName{iVar, iPlotType} = cell(1,length(plotFreqs{iPlotType}));
-                        
+
                     for iFreq = 1 : length(plotFreqs{iPlotType})
                         freqStr = sprintf('%04.0f',plotFreqs{iPlotType}(iFreq));
                         fig_saveName{iVar, iPlotType}{iFreq} = ...

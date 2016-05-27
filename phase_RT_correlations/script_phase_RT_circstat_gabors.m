@@ -17,7 +17,7 @@ phaseRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/ph
 
 trialType = 'correctgo';
 
-for i_chDB = 1 : length(chDB_list)
+for i_chDB = 2 : length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')

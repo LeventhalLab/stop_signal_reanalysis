@@ -58,7 +58,7 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
 
 desired_freq_ticks = [4,32,64,128,256,500];
                                           
-for i_chDB = 1 : 1%length(chDB_list)
+for i_chDB = 2 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -224,6 +224,7 @@ for i_chDB = 1 : 1%length(chDB_list)
             
         end    % for iCh = 1 : numCh
 
+        if numChPlots == 0; continue; end
         % average across all tetrodes for each region for a single session
         numPagesForRegions = 0;
         for iRegion = 1 : numRegions

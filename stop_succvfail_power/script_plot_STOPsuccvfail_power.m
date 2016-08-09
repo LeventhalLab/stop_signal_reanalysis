@@ -123,9 +123,9 @@ for i_chDB = 1 : 4%length(chDB_list)
                 ch = regionChannels{iCh};
                 z_STOPpower_metadata.chName = ch.name;
                 z_STOPpower_metadata.region = ch.location.name;
-                surr_power_mat_saveName = ['power_stopSuccvFail_surrogates_' ch.name '.mat'];
+                surr_power_mat_saveName = ['power_stopSuccvFail_surrogates_' ch.name '_gabor.mat'];
                 surr_power_mat_saveName = fullfile(subject_stopPowerDir, surr_power_mat_saveName);
-                z_power_mat_saveName = ['power_stopSuccvFail_z_' ch.name '.mat'];
+                z_power_mat_saveName = ['power_stopSuccvFail_z_' ch.name '_gabor.mat'];
                 z_power_mat_saveName = fullfile(subject_stopPowerDir, z_power_mat_saveName);
                 if exist(z_power_mat_saveName, 'file')
                     continue

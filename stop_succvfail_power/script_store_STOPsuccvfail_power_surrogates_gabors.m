@@ -1,16 +1,21 @@
-% script_store_STOPsuccvfail_power_z
+% script_store_STOPsuccvfail_power_surrogates_gabors
+
+% script to go through all STOP sessions and generate surrogate
+% distributions for differences in the mrv's between STOP-success and
+% STOP-failure trials
 
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 % hilbert_1Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
 % hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
-phase_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power';
-power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power';
+phase_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_phase_gabors';
+power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power_gabors';
 
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
 numSurrogates = 200;
 
-for i_chDB = 1:4%4%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
+    
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
         chDB_file = fullfile(chDB_directory, chDB_fnames{i_chDB});
@@ -44,7 +49,7 @@ for i_chDB = 1:4%4%length(chDB_list)
         
         disp(sessionList{iSession})
         
-        subject_stopPowerDir = fullfile(power_stop_succvfail_directory, [implantID '_stopPower']);
+%         subject_stopPowerDir = fullfile(power_stop_succvfail_directory, [implantID '_stopPower']);
         
         cp = initChanParams();
         cp.session = sessionList{iSession};
@@ -75,36 +80,39 @@ for i_chDB = 1:4%4%length(chDB_list)
         end
         
         for iCh = 1 : numSessionChannels
-            stopPower_name = ['stopPower_' sessionChannels{iCh}.name '.mat'];
+            stopPower_name = ['stopPower_' sessionChannels{iCh}.name '_gabor.mat'];
             stopPower_name = fullfile(session_stopPowerDir, stopPower_name);
             if ~exist(stopPower_name, 'file'); continue; end
             
             load(stopPower_name);
             break;
         end
-        
         if ~exist(stopPower_name, 'file'); continue; end
-        z_STOPpower_metadata.Fs = STOPmetadata.Fs;
-        z_STOPpower_metadata.freqBands = STOPmetadata.freqBands;
-        z_STOPpower_metadata.eventList = STOPmetadata.eventList;
-        z_STOPpower_metadata.chName = STOPmetadata.chName;
-        z_STOPpower_metadata.twin = STOPmetadata.twin;
+        surr_STOPpower_metadata.Fs = STOPmetadata.Fs;
+        surr_STOPpower_metadata.f = STOPmetadata.f;
+        surr_STOPpower_metadata.eventList = STOPmetadata.eventList;
+        surr_STOPpower_metadata.chName = STOPmetadata.chName;
+        surr_STOPpower_metadata.twin = STOPmetadata.twin;
         
         numEventTypes = length(STOPmetadata.eventList);
-        numFreqs  = size(STOPmetadata.freqBands, 1);
-        numSamps  = size(correctSTOP_power, 4);
-        
+        numFreqs  = length(STOPmetadata.f);
+        numSamps  = size(correctSTOP_power, 2);
+
         powerDiff = zeros(numEventTypes, numFreqs, numSamps);
-        t = linspace(z_STOPpower_metadata.twin(1),z_STOPpower_metadata.twin(2),numSamps);
-        f = mean(STOPmetadata.freqBands, 2);
+        t = linspace(surr_STOPpower_metadata.twin(1),surr_STOPpower_metadata.twin(2),numSamps);
+        f = STOPmetadata.f;
         
-        z_STOPpower_metadata.t = t;
-        z_STOPpower_metadata.f = f;
+        surr_STOPpower_metadata.t = t;
+        surr_STOPpower_metadata.f = f;
         
-        mean_power = zeros(numRegions, 2, numEventTypes, numFreqs, numSamps);   % 1 for correct, 2 for failed STOP
-        mean_powerDiff = zeros(numRegions, numEventTypes, numFreqs, numSamps);  
+        surrogate_vecDiffmat_saveName = ['vecDiff_stopSuccvFail_surrogates_' sessionList{iSession} '_gabor.mat'];
+        surrogate_vecDiffmat_saveName = fullfile(session_stopPowerDir, surrogate_vecDiffmat_saveName);
+
+        mean_power = zeros(numRegions, 2, numEventTypes, numSamps, numFreqs);   % 1 for correct, 2 for failed STOP
+        mean_powerDiff = zeros(numRegions, numEventTypes, numSamps, numFreqs);  
         num_ch_per_region = zeros(1, numRegions);
-        
+
+
         for iRegion = 1 : numRegions
             cp = initChanParams();
             cp.locationName = regionList{iRegion};            
@@ -113,7 +121,7 @@ for i_chDB = 1:4%4%length(chDB_list)
             regionChannels = sessionChannels(chList);
             numRegionChannels = length(regionChannels);
             
-            power_by_region{iRegion} = zeros(numRegionChannels, 2, numEventTypes, numFreqs, numSamps);
+            power_by_region{iRegion} = zeros(numRegionChannels, 2, numEventTypes, numSamps, numFreqs);
             
             num_ch_per_region(iRegion) = numRegionChannels;
 
@@ -121,41 +129,55 @@ for i_chDB = 1:4%4%length(chDB_list)
 %                 iCh
             
                 ch = regionChannels{iCh};
-                z_STOPpower_metadata.chName = ch.name;
-                z_STOPpower_metadata.region = ch.location.name;
-                surr_power_mat_saveName = ['power_stopSuccvFail_surrogates_' ch.name '.mat'];
+                surr_STOPpower_metadata.chName = ch.name;
+                surr_STOPpower_metadata.region = ch.location.name;
+                surr_power_mat_saveName = ['power_stopSuccvFail_surrogates_' ch.name '_gabor.mat'];
                 surr_power_mat_saveName = fullfile(session_stopPowerDir, surr_power_mat_saveName);
-                z_power_mat_saveName = ['power_stopSuccvFail_z_' ch.name '.mat'];
-                z_power_mat_saveName = fullfile(session_stopPowerDir, z_power_mat_saveName);
-                if exist(z_power_mat_saveName, 'file')
+                if exist(surr_power_mat_saveName, 'file')
                     continue
                 end
-                if ~exist(surr_power_mat_saveName, 'file')
-                    continue
-                end
-                load(surr_power_mat_saveName);
-                
-                stopPower_name = ['stopPower_' ch.name '.mat'];
+            
+                stopPower_name = ['stopPower_' ch.name '_gabor.mat'];
                 stopPower_name = fullfile(session_stopPowerDir, stopPower_name);
                 if ~exist(stopPower_name, 'file'); continue; end
+
                 load(stopPower_name);
-                
                 numEventTypes = size(correctSTOP_power, 1);
-                numFreqs      = size(correctSTOP_power, 2);
-                numSamps      = size(correctSTOP_power, 4);
+                numFreqs      = size(correctSTOP_power, 4);
+                numSamps      = size(correctSTOP_power, 2);
                 numSuccTrials = size(correctSTOP_power, 3);
                 numFailTrials = size(failedSTOP_power, 3);
                 totSTOPTrials = numSuccTrials + numFailTrials;
                 
-                realPowerDiff = squeeze(mean(correctSTOP_power, 3)) - squeeze(mean(failedSTOP_power,3));
-                zPowerDiff = (realPowerDiff - mean_surr_diff) ./ std_surr_diff;
+                allPower = zeros(numEventTypes, numSamps, totSTOPTrials, numFreqs);
+                for iEventType = 1 : numEventTypes
+                    for iFreq = 1 : numFreqs
+                        allPower(iEventType, :, :, iFreq) = [squeeze(correctSTOP_power(iEventType, :, :, iFreq)), ...
+                                                             squeeze(failedSTOP_power(iEventType, :, :, iFreq))];
+                    end
+                end
+                surr_diff = zeros(numSurrogates, numEventTypes, numSamps, numFreqs);
+                for iSurrogate = 1 : numSurrogates
+                    surrogateIndices = randperm(totSTOPTrials);
+                    
+                    surr_correctPower = allPower(:, :, surrogateIndices(1:numSuccTrials), :);
+                    surr_failedPower = allPower(:, :, surrogateIndices(numSuccTrials+1:end), :);
+                    
+                    surr_power1 = squeeze(mean(surr_correctPower, 3));
+                    surr_power2 = squeeze(mean(surr_failedPower, 3));
+
+                    surr_diff(iSurrogate, :, :, :) = surr_power1 - surr_power2;
+                end
                 
-                save(z_power_mat_saveName, 'realPowerDiff','zPowerDiff','z_STOPpower_metadata');
+                mean_surr_diff = squeeze(mean(surr_diff, 1));
+                std_surr_diff  = squeeze(std(surr_diff, 0, 1));
                 
-            end
+                save(surr_power_mat_saveName, 'mean_surr_diff','std_surr_diff','surr_STOPpower_metadata');
+                    
+            end    % for iCh...
             
-        end
+        end    % for iRegion...
         
-    end
+    end    % for iSession...
     
 end

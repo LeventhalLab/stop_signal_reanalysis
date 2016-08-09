@@ -8,6 +8,7 @@ gabor_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/trial_sc
 % hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
 % powerRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations';
 phaseRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_correlations_gabors';
+lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
 
 [chDB_list, chDB_fnames] = get_chStructs_for_analysis;
 
@@ -17,7 +18,7 @@ phaseRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/ph
 
 trialType = 'correctgo';
 
-for i_chDB = 2 : length(chDB_list)
+for i_chDB = 10 : length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -28,6 +29,16 @@ for i_chDB = 2 : length(chDB_list)
     
     implantID = implantID_from_ratID(chDB_list{i_chDB}(1:5));
     subject_gabor_dir = fullfile(gabor_directory, [implantID '_ps']);
+    subject_lfp_dir = fullfile(lfp_root, [implantID '_HF_LFPs']);
+    
+    % get names of all the lfp files
+    cd(subject_lfp_dir);
+    lfpDirStruct = dir([implantID '*.hsdf']);
+    lfpList = cell(1,length(lfpDirStruct));
+    for ii = 1 : length(lfpDirStruct)
+        lfpList{ii} = lfpDirStruct(ii).name;
+    end
+        
 %     subject_gabor_dir = fullfile(hilbert_1Hz_directory, [implantID '_hilbert']);
 %     subject_hilbertDir_025Hz = fullfile(hilbert_025Hz_directory, [implantID '_hilbert']);
     if ~exist(subject_gabor_dir, 'dir')
@@ -44,19 +55,23 @@ for i_chDB = 2 : length(chDB_list)
         mkdir(subject_phaseRTcorrdir);
     end
     
-    chDB_info = whos( [chDB_list{i_chDB}(1:3) 'Ch*'] );
+    if i_chDB < 5
+        chDB_info = whos( [chDB_list{i_chDB}(1:3) 'Ch*'] );
+    else
+        chDB_info = whos( [chDB_list{i_chDB}(1:5) 'Ch*'] );
+    end
     channels = eval( chDB_info.name );
     
     [RT, ~, sessionList] = collect_RT_MT_by_rat(channels, trialType);
     numSessions = length( sessionList );
     
     % establish RT quantiles for phase analysis
-    allRT = RT{1};
-    if numSessions > 1
-        for iSession = 2 : numSessions
-            allRT = [allRT, RT{iSession}];
-        end
-    end
+%     allRT = RT{1};
+%     if numSessions > 1
+%         for iSession = 2 : numSessions
+%             allRT = [allRT, RT{iSession}];
+%         end
+%     end
 %     allRT = sort(allRT);
 %     numRT = length(allRT);
     
@@ -74,11 +89,28 @@ for i_chDB = 2 : length(chDB_list)
         sessionChannels = excludeChannels(cp, sessionChannels);
         
         numCh = length(sessionChannels);
+        if numCh == 0; continue; end
 
+        sessionDate = sessionChannels{1}.date;
+        sessionDate = strrep(sessionDate,'-','');
+        
+        lfp_name_idx = strfind(lfpList,sessionDate);
+        valid_lfp_name = false(1,length(lfpList));
+        for ii = 1 : length(lfpList)
+            valid_lfp_name(ii) = ~isempty(lfp_name_idx{ii});
+        end
+        lfpDuration = 0;
+        if sum(valid_lfp_name) > 1
+            disp(['more than one lfp file for ' sessionDate]);
+        elseif sum(valid_lfp_name) == 0
+            disp(['no lfp file for ' sessionDate]);
+        else
+            full_lfpName = fullfile(subject_lfp_dir, lfpList{valid_lfp_name});
+            lfpDuration = getHSDlength( 'filename', full_lfpName );
+        end
+        
         gabor_sessionDir = fullfile(subject_gabor_dir, [sessionList{iSession} '_scalograms']);
-%         hilbert_sessionDir_025Hz = fullfile(subject_hilbertDir_025Hz, sessionList{iSession});
         if ~exist(gabor_sessionDir, 'dir'); continue; end
-%         if ~exist(hilbert_sessionDir_025Hz, 'dir'); continue; end
 
         phaseRTcorr_sessionDir = fullfile(subject_phaseRTcorrdir, sessionList{iSession});
         if ~exist(phaseRTcorr_sessionDir, 'dir')
@@ -119,6 +151,20 @@ for i_chDB = 2 : length(chDB_list)
         
 %         numSamps = round(range(twin) * md_1Hz.metadata.Fs);
             
+        trialEventParams = getTrialEventParams('correctgo');
+        correctGOtrials = extractTrials2(sessionChannels{1}.trials,trialEventParams);
+        current_RT = RT{iSession};
+        
+        if correctGOtrials(1).timestamps.cueOn < (1-scalogram_metadata.twin(1))
+            current_RT = current_RT(2:end);
+        end
+        if lfpDuration > 0
+            if (lfpDuration - correctGOtrials(end).timestamps.noseSideOut) < (1+scalogram_metadata.twin(2))
+                current_RT = current_RT(1:end-1);
+            end
+        end
+        current_RT = current_RT(current_RT < 2);   % workaround for a trial for IM365 where the tone timing wasn't recorded; eliminate that trial
+                    
         for iCh = 1 : numCh
             
             ch = sessionChannels{iCh};
@@ -181,15 +227,12 @@ for i_chDB = 2 : length(chDB_list)
                     % GENERATE SURROGATE DISTRIBUTIONS? ALSO, ADD IN A
                     % CALCULATION WHERE ALL RTs ARE TESTED ACROSS SESSIONS?
                     
-                    trialEventParams = getTrialEventParams('correctgo');
-                    correctGOtrials = extractTrials2(ch.trials,trialEventParams);
+
                     % exclude trials that occur too early to
                     % get full gabor windows
-                    if correctGOtrials(1).timestamps.cueOn < 2
-                        current_RT = RT{iSession}(2:end);
-                    else
-                        current_RT = RT{iSession};
-                    end
+
+                    
+%                     if length(RT{iSession}) < size(W,
                     for iSamp = 1 : numSamps
 %                         [circRTcorr(iEvent, iFreq, iSamp), ...
 %                             circRT_p(iEvent, iFreq, iSamp)] = ...

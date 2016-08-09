@@ -33,21 +33,17 @@ for i_chDB = 5 : length(chDB_list)
     
     implantID = implantID_from_ratID(chDB_list{i_chDB}(1:5));
         
-    subject_gaborDir = fullfile(gabor_directory, [implantID '_ps']);
-%     subject_hilbertDir_1Hz = fullfile(hilbert_1Hz_directory, [implantID '_hilbert']);
-%     subject_hilbertDir_025Hz = fullfile(hilbert_025Hz_directory, [implantID '_hilbert']);
-    if ~exist(subject_gaborDir, 'dir')
-        disp([subject_gaborDir ' not found. Skipping ' implantID '...'])
+    subject_gaborDir = fullfile(hilbert_1Hz_directory, [implantID '_hilbert']);
+    subject_hilbertDir_1Hz = fullfile(hilbert_1Hz_directory, [implantID '_hilbert']);
+    subject_hilbertDir_025Hz = fullfile(hilbert_025Hz_directory, [implantID '_hilbert']);
+    if ~exist(subject_hilbertDir_1Hz, 'dir')
+        disp([subject_hilbertDir_1Hz ' not found. Skipping ' implantID '...'])
         continue
     end
-%     if ~exist(subject_hilbertDir_1Hz, 'dir')
-%         disp([subject_hilbertDir_1Hz ' not found. Skipping ' implantID '...'])
-%         continue
-%     end
-%     if ~exist(subject_hilbertDir_025Hz, 'dir')
-%         disp([subject_hilbertDir_025Hz ' not found. Skipping ' implantID '...'])
-%         continue
-%     end
+    if ~exist(subject_hilbertDir_025Hz, 'dir')
+        disp([subject_hilbertDir_025Hz ' not found. Skipping ' implantID '...'])
+        continue
+    end
     
     subject_stopPhaseDir = fullfile(phase_stop_succvfail_directory, [implantID '_stopPhases']);
     if ~exist(subject_stopPhaseDir, 'dir')

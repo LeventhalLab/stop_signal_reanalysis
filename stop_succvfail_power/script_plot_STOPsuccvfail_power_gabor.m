@@ -1,16 +1,16 @@
-% script_store_STOPsuccvfail_power_z
+% script_plot_STOPsuccvfail_power_gabor
 
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 % hilbert_1Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
 % hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
-phase_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power';
-power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power';
+phase_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_phase_gabors';
+power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power_gabors';
 
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
 numSurrogates = 200;
 
-for i_chDB = 1:4%4%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
         chDB_file = fullfile(chDB_directory, chDB_fnames{i_chDB});
@@ -68,15 +68,15 @@ for i_chDB = 1:4%4%length(chDB_list)
         regionList = getRegionsfromChannelDB(sessionChannels);
         numRegions = length(regionList);
         
-        session_stopPowerDir = fullfile(subject_stopPowerDir, sessionList{iSession});
-        if ~exist(session_stopPowerDir, 'dir')
-            disp([session_stopPowerDir ' not found. Skipping ' sessionList{iSession} '...'])
+        subject_stopPowerDir = fullfile(subject_stopPowerDir, sessionList{iSession});
+        if ~exist(subject_stopPowerDir, 'dir')
+            disp([subject_stopPowerDir ' not found. Skipping ' sessionList{iSession} '...'])
             continue
         end
         
         for iCh = 1 : numSessionChannels
             stopPower_name = ['stopPower_' sessionChannels{iCh}.name '.mat'];
-            stopPower_name = fullfile(session_stopPowerDir, stopPower_name);
+            stopPower_name = fullfile(subject_stopPowerDir, stopPower_name);
             if ~exist(stopPower_name, 'file'); continue; end
             
             load(stopPower_name);
@@ -123,10 +123,10 @@ for i_chDB = 1:4%4%length(chDB_list)
                 ch = regionChannels{iCh};
                 z_STOPpower_metadata.chName = ch.name;
                 z_STOPpower_metadata.region = ch.location.name;
-                surr_power_mat_saveName = ['power_stopSuccvFail_surrogates_' ch.name '.mat'];
-                surr_power_mat_saveName = fullfile(session_stopPowerDir, surr_power_mat_saveName);
-                z_power_mat_saveName = ['power_stopSuccvFail_z_' ch.name '.mat'];
-                z_power_mat_saveName = fullfile(session_stopPowerDir, z_power_mat_saveName);
+                surr_power_mat_saveName = ['power_stopSuccvFail_surrogates_' ch.name '_gabor.mat'];
+                surr_power_mat_saveName = fullfile(subject_stopPowerDir, surr_power_mat_saveName);
+                z_power_mat_saveName = ['power_stopSuccvFail_z_' ch.name '_gabor.mat'];
+                z_power_mat_saveName = fullfile(subject_stopPowerDir, z_power_mat_saveName);
                 if exist(z_power_mat_saveName, 'file')
                     continue
                 end
@@ -136,7 +136,7 @@ for i_chDB = 1:4%4%length(chDB_list)
                 load(surr_power_mat_saveName);
                 
                 stopPower_name = ['stopPower_' ch.name '.mat'];
-                stopPower_name = fullfile(session_stopPowerDir, stopPower_name);
+                stopPower_name = fullfile(subject_stopPowerDir, stopPower_name);
                 if ~exist(stopPower_name, 'file'); continue; end
                 load(stopPower_name);
                 
@@ -147,7 +147,7 @@ for i_chDB = 1:4%4%length(chDB_list)
                 numFailTrials = size(failedSTOP_power, 3);
                 totSTOPTrials = numSuccTrials + numFailTrials;
                 
-                realPowerDiff = squeeze(mean(correctSTOP_power, 3)) - squeeze(mean(failedSTOP_power,3));
+                realPowerDiff = correctSTOP_power - failedSTOP_power;
                 zPowerDiff = (realPowerDiff - mean_surr_diff) ./ std_surr_diff;
                 
                 save(z_power_mat_saveName, 'realPowerDiff','zPowerDiff','z_STOPpower_metadata');

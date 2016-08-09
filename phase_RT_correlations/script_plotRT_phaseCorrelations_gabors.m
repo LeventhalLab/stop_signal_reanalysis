@@ -306,7 +306,7 @@ for i_chDB = 2 : 4%length(chDB_list)
     % don't bother writing zeros to disk for regions where there are no
     % sessions for this rat
     validRegions = false(1,numRegions);
-    validRegionList = cell{1,1};
+    validRegionList = cell(1,1);
     numValidRegions = 0;
     for iRegion = 1 : numRegions
         if sum(squeeze(numChannels_per_region(:,iRegion))) > 0

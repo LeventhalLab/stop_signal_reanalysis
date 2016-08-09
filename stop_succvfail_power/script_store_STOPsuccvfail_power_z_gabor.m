@@ -1,10 +1,8 @@
-% script_store_STOPsuccvfail_power_z
+% script_store_STOPsuccvfail_power_z_gabor
 
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
-% hilbert_1Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
-% hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
-phase_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power';
-power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power';
+phase_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_phase_gabors';
+power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power_gabors';
 
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
@@ -44,7 +42,7 @@ for i_chDB = 1:4%4%length(chDB_list)
         
         disp(sessionList{iSession})
         
-        subject_stopPowerDir = fullfile(power_stop_succvfail_directory, [implantID '_stopPower']);
+%         subject_stopPowerDir = fullfile(power_stop_succvfail_directory, [implantID '_stopPower']);
         
         cp = initChanParams();
         cp.session = sessionList{iSession};
@@ -75,7 +73,7 @@ for i_chDB = 1:4%4%length(chDB_list)
         end
         
         for iCh = 1 : numSessionChannels
-            stopPower_name = ['stopPower_' sessionChannels{iCh}.name '.mat'];
+            stopPower_name = ['stopPower_' sessionChannels{iCh}.name '_gabor.mat'];
             stopPower_name = fullfile(session_stopPowerDir, stopPower_name);
             if ~exist(stopPower_name, 'file'); continue; end
             
@@ -85,24 +83,24 @@ for i_chDB = 1:4%4%length(chDB_list)
         
         if ~exist(stopPower_name, 'file'); continue; end
         z_STOPpower_metadata.Fs = STOPmetadata.Fs;
-        z_STOPpower_metadata.freqBands = STOPmetadata.freqBands;
+        z_STOPpower_metadata.f = STOPmetadata.f;
         z_STOPpower_metadata.eventList = STOPmetadata.eventList;
         z_STOPpower_metadata.chName = STOPmetadata.chName;
         z_STOPpower_metadata.twin = STOPmetadata.twin;
         
         numEventTypes = length(STOPmetadata.eventList);
-        numFreqs  = size(STOPmetadata.freqBands, 1);
-        numSamps  = size(correctSTOP_power, 4);
+        numFreqs  = length(STOPmetadata.f);
+        numSamps  = size(correctSTOP_power, 2);
         
-        powerDiff = zeros(numEventTypes, numFreqs, numSamps);
+        powerDiff = zeros(numEventTypes, numSamps, numFreqs);
         t = linspace(z_STOPpower_metadata.twin(1),z_STOPpower_metadata.twin(2),numSamps);
-        f = mean(STOPmetadata.freqBands, 2);
+        f = STOPmetadata.f;
         
         z_STOPpower_metadata.t = t;
         z_STOPpower_metadata.f = f;
         
-        mean_power = zeros(numRegions, 2, numEventTypes, numFreqs, numSamps);   % 1 for correct, 2 for failed STOP
-        mean_powerDiff = zeros(numRegions, numEventTypes, numFreqs, numSamps);  
+        mean_power = zeros(numRegions, 2, numEventTypes, numSamps, numFreqs);   % 1 for correct, 2 for failed STOP
+        mean_powerDiff = zeros(numRegions, numEventTypes, numSamps, numFreqs);  
         num_ch_per_region = zeros(1, numRegions);
         
         for iRegion = 1 : numRegions
@@ -113,7 +111,7 @@ for i_chDB = 1:4%4%length(chDB_list)
             regionChannels = sessionChannels(chList);
             numRegionChannels = length(regionChannels);
             
-            power_by_region{iRegion} = zeros(numRegionChannels, 2, numEventTypes, numFreqs, numSamps);
+            power_by_region{iRegion} = zeros(numRegionChannels, 2, numEventTypes, numSamps, numFreqs);
             
             num_ch_per_region(iRegion) = numRegionChannels;
 
@@ -123,9 +121,9 @@ for i_chDB = 1:4%4%length(chDB_list)
                 ch = regionChannels{iCh};
                 z_STOPpower_metadata.chName = ch.name;
                 z_STOPpower_metadata.region = ch.location.name;
-                surr_power_mat_saveName = ['power_stopSuccvFail_surrogates_' ch.name '.mat'];
+                surr_power_mat_saveName = ['power_stopSuccvFail_surrogates_' ch.name '_gabor.mat'];
                 surr_power_mat_saveName = fullfile(session_stopPowerDir, surr_power_mat_saveName);
-                z_power_mat_saveName = ['power_stopSuccvFail_z_' ch.name '.mat'];
+                z_power_mat_saveName = ['power_stopSuccvFail_z_' ch.name '_gabor.mat'];
                 z_power_mat_saveName = fullfile(session_stopPowerDir, z_power_mat_saveName);
                 if exist(z_power_mat_saveName, 'file')
                     continue
@@ -135,14 +133,14 @@ for i_chDB = 1:4%4%length(chDB_list)
                 end
                 load(surr_power_mat_saveName);
                 
-                stopPower_name = ['stopPower_' ch.name '.mat'];
+                stopPower_name = ['stopPower_' ch.name '_gabor.mat'];
                 stopPower_name = fullfile(session_stopPowerDir, stopPower_name);
                 if ~exist(stopPower_name, 'file'); continue; end
                 load(stopPower_name);
                 
                 numEventTypes = size(correctSTOP_power, 1);
-                numFreqs      = size(correctSTOP_power, 2);
-                numSamps      = size(correctSTOP_power, 4);
+                numFreqs      = size(correctSTOP_power, 4);
+                numSamps      = size(correctSTOP_power, 2);
                 numSuccTrials = size(correctSTOP_power, 3);
                 numFailTrials = size(failedSTOP_power, 3);
                 totSTOPTrials = numSuccTrials + numFailTrials;

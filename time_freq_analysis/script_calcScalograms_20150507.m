@@ -4,8 +4,8 @@
 chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 scalogramDir = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/trial_scalograms';
 % lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/stop-signal LFPs';
-sample_lfp_name = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-singal LFPs/IM164_HF_LFPs/IM164_20091112_13-56-32.hsdf';
-lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-singal LFPs';
+sample_lfp_name = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-signal LFPs/IM164_HF_LFPs/IM164_20091112_13-56-32.hsdf';
+lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
 
 twin_buffer = 1;    % add an extra second before and after each time window to eliminate edge effects
 
@@ -49,7 +49,7 @@ for iTrialType = 2 : numTrialTypes
     filterBanks{iTrialType} = scalogramFilterBank(f, Fs, numBufferedSamples);
 end
 
-for i_chDB = 5:length(chDB_list)
+for i_chDB = 10:length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -175,6 +175,9 @@ for i_chDB = 5:length(chDB_list)
             trialType = trialTypeList{iTrialType};
             eventList = eventLists{iTrialType};
             twin = eventtWin(iTrialType,:);
+            
+            ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
+            if exist(ch_scalogramName,'file');continue;end
             
             numSamples = round(range(twin) * Fs);
             

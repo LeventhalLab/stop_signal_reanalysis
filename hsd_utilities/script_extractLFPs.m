@@ -1,6 +1,8 @@
+% script_extractLFPs
+
 targetFs = 1000;
 rootReadDir = '/Volumes/Untitled';
-rootSaveDir = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-singal LFPs';
+rootSaveDir = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
 chDB_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;

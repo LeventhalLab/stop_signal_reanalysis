@@ -15,7 +15,7 @@ ROI_list = {'eegorb','cpu','gp','stn','snr'};
 frange = [0,10];
 pdfSuffix = sprintf('_phaseRTcorr_gabors_%d_%d_Hz',frange(1),frange(2));
 
-for i_chDB = 1 : 1%length(chDB_list)
+for i_chDB = 2 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
 %     if ~exist(chDB_list{i_chDB}, 'var')

@@ -14,7 +14,7 @@ power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal rean
 
 numSurrogates = 200;
 
-for i_chDB = 1 : 4%length(chDB_list)
+for i_chDB = 2 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -103,7 +103,6 @@ for i_chDB = 1 : 4%length(chDB_list)
         f = STOPmetadata.f;
         
         surr_STOPpower_metadata.t = t;
-        surr_STOPpower_metadata.f = f;
         
         surrogate_vecDiffmat_saveName = ['vecDiff_stopSuccvFail_surrogates_' sessionList{iSession} '_gabor.mat'];
         surrogate_vecDiffmat_saveName = fullfile(session_stopPowerDir, surrogate_vecDiffmat_saveName);

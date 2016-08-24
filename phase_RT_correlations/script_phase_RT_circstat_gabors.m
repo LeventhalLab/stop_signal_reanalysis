@@ -155,6 +155,10 @@ for i_chDB = 10 : length(chDB_list)
         correctGOtrials = extractTrials2(sessionChannels{1}.trials,trialEventParams);
         current_RT = RT{iSession};
         
+        gabor_name = [sessionChannels{1}.name '_' trialType '_scalograms.mat'];
+        gabor_name = fullfile(gabor_sessionDir, gabor_name);
+        load(gabor_name);
+        
         if correctGOtrials(1).timestamps.cueOn < (1-scalogram_metadata.twin(1))
             current_RT = current_RT(2:end);
         end
@@ -187,7 +191,7 @@ for i_chDB = 10 : length(chDB_list)
                 continue
             end
             
-            load(gabor_name);
+            if iCh > 1; load(gabor_name); end    % the first channel gabor scalograms were loaded earlier
             phaseRTcorr_metadata.freqs = scalogram_metadata.f;
             phaseRTcorr_metadata.twin = scalogram_metadata.twin;
             phaseRTcorr_metadata.t = scalogram_metadata.t;

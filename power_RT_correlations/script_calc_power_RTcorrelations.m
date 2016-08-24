@@ -18,7 +18,7 @@ twin = [-1 1];
 
 trialType = 'correctgo';
 
-for i_chDB = 4 : 4%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
 
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')

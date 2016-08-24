@@ -1,7 +1,8 @@
 % script_extractLFPs
 
 targetFs = 1000;
-rootReadDir = '/Volumes/Untitled';
+rootReadDir = '/Volumes/Leventhal_lab_HD01';
+% rootReadDir = '/Volumes/Untitled';
 rootSaveDir = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
 chDB_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 
@@ -10,7 +11,7 @@ chDB_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-sign
 ROI_list = {'eegorb','cpu','gp','stn','snr'};
 numRegions = length(ROI_list);
 
-for i_chDB = 5 : length(chDB_list)
+for i_chDB = 11 : 11%length(chDB_list)
 
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')

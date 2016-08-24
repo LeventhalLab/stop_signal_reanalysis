@@ -33,7 +33,7 @@ for iarg = 1 : 2 : nargin - 1
 end
 
 bytes_per_sample = getBytesPerSample(dataType);
-openDir = openDirStart;
+% openDir = openDirStart;
 
 % set channel parameters to extract any channel
 % cp.task = -1;

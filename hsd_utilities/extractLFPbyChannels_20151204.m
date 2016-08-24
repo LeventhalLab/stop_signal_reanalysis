@@ -32,7 +32,7 @@ for iarg = 1 : 2 : nargin - 1
 end
 
 bytes_per_sample = getBytesPerSample(dataType);
-openDir = openDirStart;
+% openDir = openDirStart;
 
 % set channel parameters to extract any channel
 % cp.task = -1;
@@ -77,6 +77,9 @@ for iSession = 1 : numSessions
         openDir = openDirStart;
     end
     
+%     new_HSD_fn = 'IM166_20091125_12-19-07';   % takes care of IM166 11/25
+%     second session
+
     sessionDir = fullfile(openDir, [new_HSD_fn(1:14), 'a']);
     if ~exist(fullfile(sessionDir, [new_HSD_fn ext]), 'file')
         disp(['File ' fullfile(sessionDir, new_HSD_fn) ' does not exist.'])

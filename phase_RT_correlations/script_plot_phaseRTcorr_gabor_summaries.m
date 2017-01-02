@@ -1,8 +1,12 @@
 % script_plot_phaseRTcorr_gabor_summaries
 
-chDB_directory         = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
-phaseRTcorr_directory  = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_correlations_gabors';
-RTcorr_plots_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_correlations_gabor_plots';
+% chDB_directory         = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
+% phaseRTcorr_directory  = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_correlations_gabors';
+% RTcorr_plots_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_correlations_gabor_plots';
+
+chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
+phase_stop_succvfail_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/stop_succvfail_phase_gabors';
+power_stop_succvfail_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/stop_succvfail_power_gabors';
 
 [chDB_list, chDB_fnames] = get_chStructs_for_analysis;
 channels_per_page = 5;

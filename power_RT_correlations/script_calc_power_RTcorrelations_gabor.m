@@ -126,6 +126,10 @@ for i_chDB = 1 : 4%length(chDB_list)
         
         gabor_name = [sessionChannels{1}.name '_' trialType '_scalograms.mat'];
         gabor_name = fullfile(gabor_sessionDir, gabor_name);
+        if ~exist(gabor_name,'file')
+            disp([gabor_name ' not found.'])
+            continue;
+        end
         load(gabor_name);
         
         if correctGOtrials(1).timestamps.cueOn < (1-scalogram_metadata.twin(1))

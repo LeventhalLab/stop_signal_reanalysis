@@ -13,7 +13,7 @@ power_stop_succvfail_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/stop_
 
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
-y_zoom_lim = [1 100];   % for more focused plot
+y_zoom_lim = [0.1 100];   % for more focused plot
 y_full_plot_lim = [0.1 502];
 
 regions_per_page = 5;
@@ -299,10 +299,8 @@ for i_chDB = 1 : 4%length(chDB_list)
                 set(gca,'yticklabel',[]);
             else
                 ylabel('frequency (Hz)')
-                fticks = f(freqTick_idx);
-                fticks = fticks((fticks > y_zoom_lim(1)) & (fticks < y_zoom_lim(2)));
-%                 set(gca,'ytick',round(f_to_plot(freqTick_idx)));
-                set(gca,'ytick',round(fticks));
+                
+                set(gca,'ytick',round(f_to_plot(freqTick_idx)));
             end
         end
 
@@ -311,7 +309,7 @@ for i_chDB = 1 : 4%length(chDB_list)
             h_figAxes = createFigAxes(h_power_fig);
             h_figAxes_zoom = createFigAxes(h_power_fig_zoom);
 
-            textStr{1} = ['difference in power z-scores (correct - failed), averaged across sessions'];
+            textStr{1} = ['difference in power z-scores, averaged across sessions'];
             textStr{2} = page_regionList;
             textStr{3} = ['number of sessions per region: ' page_numSessionList];
             textStr{4} = sprintf('color limits: %d to %d',z_colorLim(1),z_colorLim(2));

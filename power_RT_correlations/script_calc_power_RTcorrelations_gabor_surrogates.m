@@ -12,7 +12,7 @@ lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_c
 
 [chDB_list, chDB_fnames] = get_chStructs_for_analysis;
 
-eventList = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn'};
+% eventList = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn'};
 numEvents = length(eventList);
 twin = [-1 1];
 
@@ -120,7 +120,7 @@ for i_chDB = 1 : 4%length(chDB_list)
             mkdir(powerRTcorr_sessionDir);
         end
         
-        powerRTcorr_metadata.trialType = trialType;
+        powerRTcorr_surr_metadata.trialType = trialType;
         
         trialEventParams = getTrialEventParams('correctgo');
         correctGOtrials = extractTrials2(sessionChannels{1}.trials,trialEventParams);
@@ -130,15 +130,17 @@ for i_chDB = 1 : 4%length(chDB_list)
         gabor_name = fullfile(gabor_sessionDir, gabor_name);
         load(gabor_name);
         
-        powerRTcorr_metadata.freqs = scalogram_metadata.f;
-        powerRTcorr_metadata.twin = scalogram_metadata.twin;
-        powerRTcorr_metadata.t = scalogram_metadata.t;
-        powerRTcorr_metadata.eventList = scalogram_metadata.eventList;
-        powerRTcorr_metadata.Fs = scalogram_metadata.Fs;    
-            
-        numEvents = length(powerRTcorr_metadata.eventList);
+        powerRTcorr_surr_metadata.freqs = scalogram_metadata.f;
+        powerRTcorr_surr_metadata.twin = scalogram_metadata.twin;
+        powerRTcorr_surr_metadata.t = scalogram_metadata.t;
+        powerRTcorr_surr_metadata.eventList = scalogram_metadata.eventList;
+        powerRTcorr_surr_metadata.Fs = scalogram_metadata.Fs;    
+        powerRTcorr_surr_metadata.numSurrogates = num_surrogates;
+        
+        eventList = powerRTcorr_surr_metadata.eventList;
+        numEvents = length(eventList);
         numSamps = size(W,2);
-        numFreqs = length(powerRTcorr_metadata.freqs);
+        numFreqs = length(powerRTcorr_surr_metadata.freqs);
             
         if correctGOtrials(1).timestamps.cueOn < (1-scalogram_metadata.twin(1))
             current_RT = current_RT(2:end);
@@ -162,21 +164,22 @@ for i_chDB = 1 : 4%length(chDB_list)
             end
             
             power_RTcorr_name_surr = ['power_RTcorr_' sessionChannels{iCh}.name '_surr.mat'];
-            power_RTcorr_name_surr = fullfile(powerRTcorr_sessionDir, power_RTcorr_name);
+            power_RTcorr_name_surr = fullfile(powerRTcorr_sessionDir, power_RTcorr_name_surr);
             
-            powerRTcorr_surr_mean = NaN(numEvents, numFreqs, numSamps);
-            
-            % load analytic signal around each event and calculate
-            % correlation coefficients
-            if exist(power_RTcorr_name, 'file')
+            if exist(power_RTcorr_name_surr, 'file')
                 continue
             end
             
+            powerRTcorr_surr_mean = NaN(numEvents, numFreqs, numSamps);
+            powerRTcorr_surr_std = NaN(numEvents, numFreqs, numSamps);
+            
+            % load analytic signal around each event and calculate
+            % correlation coefficients
+
             if iCh > 1; load(gabor_name); end    % the first channel gabor scalograms were loaded earlier
             
             gaborPower = abs(W).^2;
             
-            for iSurrogate = 1 : num_surrogates
             for iEvent = 1 : numEvents
 %                 tic
                 disp(sprintf('%s, %s, %d of %d sessions', ...
@@ -185,16 +188,23 @@ for i_chDB = 1 : 4%length(chDB_list)
                 for iFreq = 1 : numFreqs
 
                     for iSamp = 1 : numSamps
-                        [cc, p] = corr(squeeze(gaborPower(iEvent,iSamp,:,iFreq)), RT{iSession}', ...
-                                       'type','spearman');
-                        powerRTcorr(iEvent, iFreq, iSamp) = cc;
+                        
+                        surr_values = zeros(1, num_surrogates);
+                        for iSurr = 1 : num_surrogates
+                            trialPerm = randperm(length(RT{iSession}));
+                            [cc, p] = corr(squeeze(gaborPower(iEvent,iSamp,:,iFreq)), RT{iSession}(trialPerm)', ...
+                                           'type','spearman');
+                            surr_values(iSurr) = cc;
+                        end
+                        powerRTcorr_surr_mean(iEvent, iFreq, iSamp) = mean(surr_values);
+                        powerRTcorr_surr_std(iEvent, iFreq, iSamp) = std(surr_values);
                     end
                         
                 end
 %                 toc
             end
 
-            save(power_RTcorr_name_surr, 'powerRTcorr', 'powerRTcorr_metadata');
+            save(power_RTcorr_name_surr, 'powerRTcorr_surr_mean', 'powerRTcorr_surr_std','powerRTcorr_surr_metadata');
             disp(sprintf('%s saved', power_RTcorr_name_surr));
             
         end

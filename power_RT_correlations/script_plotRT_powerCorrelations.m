@@ -1,21 +1,20 @@
-% script_plotRT_powerCorrelations
+% script_plotRT_powerCorrelations_gabor
 
-% script to plot the modulation index heat maps to look for phase-amplitude
-% coupling
+% script to plot the correlation coefficients between power at different
+% frequencies and RT
 
 bitOrder = 'b';
 colorLim = [0, 2e-5];
 
 chDB_directory         = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
-hilbert_directory      = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
-powerRTcorr_directory  = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations';
-RTcorr_plots_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT correlation plots';
+powerRTcorr_directory  = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations_gabors';
+RTcorr_plots_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT correlation gabor plots';
 
 [chDB_list, chDB_fnames] = get_chStructs_for_analysis;
 channels_per_page = 5;
 
 % load a sample file
-sample_powerRT_file = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations/IM164_powerRTcorr/D2220091005/power_RTcorr_D2220091005T02.mat';
+sample_powerRT_file = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations/IM164_powerRTcorr_gabor/D2220091006/power_RTcorr_D2220091006E01.mat';
 
 load(sample_powerRT_file);
 eventList = powerRTcorr_metadata.eventList;
@@ -91,8 +90,13 @@ for i_chDB = 1 : length(chDB_list)
             continue;
         end
 
+        session_RTcorr_plots_directory = fullfile(subject_RTcorr_plots_directory, [sessionList{iSession} '_RTcorr_gabor_plots']);
+        if ~exist(session_RTcorr_plots_directory, 'dir')
+            mkdir(session_RTcorr_plots_directory);
+        end
+    
         numPagesForSession = 0;
-        PDFname = fullfile(subject_RTcorr_plots_directory, [sessionList{iSession} '_power_RTcorr.pdf']);
+        PDFname = [sessionList{iSession} '_power_RTcorr_gabor'];
         
         % find how many different regions there are for this set of
         % channels
@@ -101,7 +105,7 @@ for i_chDB = 1 : length(chDB_list)
             
             ch = sessionChannels{iCh};
             
-            powerRT_name = ['power_RT_analysis_' ch.name '.mat'];
+            powerRT_name = ['power_RTcorr_' ch.name '.mat'];
             powerRT_name = fullfile(powerRTcorr_sessionDir, powerRT_name);
             
             if exist(powerRT_name, 'file')
@@ -135,7 +139,11 @@ for i_chDB = 1 : length(chDB_list)
             end
             
             if rem(iCh, figProps.n * figProps.m) == 0 || iCh == numCh
+                cur_PDFname = sprintf('%s_%02d.pdf',PDFname,numPagesForSession);
+                cur_PDFname = fullfile(session_RTcorr_plots_directory, cur_PDFname);
                 if numPagesForSession == 1
+                    
+                    % WORKING HERE - CHANGE TO PRINT
                     export_fig(pdfName, '-pdf', '-q101', '-painters');
                 else
                     export_fig(pdfName, '-pdf', '-q101', '-painters', '-append');

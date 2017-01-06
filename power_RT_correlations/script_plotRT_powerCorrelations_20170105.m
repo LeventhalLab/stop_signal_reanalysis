@@ -53,7 +53,7 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
 
 session_powerRTcorr_metadata = powerRTcorr_metadata;
-for i_chDB = 2 : 4 %length(chDB_list)
+for i_chDB = 1 : 4 %length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -138,6 +138,9 @@ for i_chDB = 2 : 4 %length(chDB_list)
             if exist(powerRT_name, 'file')% && exist(powerRTsurr_name, 'file')
                 load(powerRT_name);
 %                 load(powerRTsurr_name);
+            else
+                fprintf('%s does not exist, skipping...', powerRT_name);
+                continue;
             end
             
             regionIdx = find(strcmpi(ch.location.subclass, sessionRegionList));

@@ -5,6 +5,11 @@
 % ALSO NEED TO COMPARE PHASE OF ONGOING OSCILLATIONS IN STOP-SUCCESS VS
 % STOP-FAILURE TRIALS AND NOGO-SUCCESS VS NOGO-FAIL TRIALS
 
+% chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
+% gabor_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/trial_scalograms';
+% powerRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations_gabors';
+% lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
+
 chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
 gabor_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/trial_scalograms';
 powerRTcorr_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/power_RT_correlations_gabors';
@@ -18,7 +23,7 @@ twin = [-1 1];
 
 trialType = 'correctgo';
 
-for i_chDB = 2 : 4%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
 
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -44,7 +49,7 @@ for i_chDB = 2 : 4%length(chDB_list)
     
     subject_powerRTcorrdir = fullfile(powerRTcorr_directory, [implantID '_powerRTcorr_gabor']);
     if ~exist(subject_powerRTcorrdir, 'dir')
-        mkdir(subject_powerRTcorrdir);
+        continue;
     end
     
     if i_chDB < 5
@@ -54,7 +59,7 @@ for i_chDB = 2 : 4%length(chDB_list)
     end
     channels = eval( chDB_info.name );
     
-    [RT, ~, sessionList] = collect_RT_MT_by_rat(channels, trialType);
+%     [RT, ~, sessionList] = collect_RT_MT_by_rat(channels, trialType);
     numSessions = length( sessionList );
     
     % establish RT quantiles for phase analysis
@@ -67,11 +72,11 @@ for i_chDB = 2 : 4%length(chDB_list)
 %     allRT = sort(allRT);
 %     numRT = length(allRT);
     
-    powerRTcorr = cell(1, numSessions);    % cell array to store correlations between continuous narrow-band power and RT
+%     powerRTcorr = cell(1, numSessions);    % cell array to store correlations between continuous narrow-band power and RT
 
     for iSession = 1 : numSessions
         
-%         if iSession <= 33; continue; end% && iSession < 40;continue;end
+        if iSession > 33 && iSession < 40;continue;end
 
         cp = initChanParams();
         cp.session = sessionList{iSession};

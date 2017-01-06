@@ -139,6 +139,7 @@ for i_chDB = 1 : 4%length(chDB_list)
                 ch = regionChannels{iCh};
                 surr_STOPmrv_metadata.chName = ch.name;
                 surr_STOPmrv_metadata.region = ch.location.name;
+                surr_STOPmrv_metadata.numSurrogates = numSurrogates;
                 surr_mrv_mat_saveName = ['mrv_stopSuccvFail_surrogates_' ch.name '_gabor.mat'];
                 surr_mrv_mat_saveName = fullfile(session_stopPhaseDir, surr_mrv_mat_saveName);
                 if exist(surr_mrv_mat_saveName, 'file')

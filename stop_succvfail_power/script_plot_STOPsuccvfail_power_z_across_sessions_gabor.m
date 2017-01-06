@@ -319,6 +319,7 @@ for i_chDB = 1 : 4%length(chDB_list)
             axes(h_figAxes);
             text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
             svnm = sprintf('%s_%02d.pdf',zphase_acrossSessions_fig_saveName,numPages);
+            svnm_fig = sprintf('%s_%02d.fig',zphase_acrossSessions_fig_saveName,numPages);
             print(svnm,'-dpdf');
             
             axes(h_figAxes_zoom);

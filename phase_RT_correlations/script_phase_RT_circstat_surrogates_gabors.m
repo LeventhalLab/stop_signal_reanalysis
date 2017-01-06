@@ -1,0 +1,263 @@
+% script_phase_RT_circstat_surrogates_gabors
+
+% ALSO NEED TO COMPARE PHASE OF ONGOING OSCILLATIONS IN STOP-SUCCESS VS
+% STOP-FAILURE TRIALS AND NOGO-SUCCESS VS NOGO-FAIL TRIALS
+
+chDB_directory  = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
+gabor_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/trial_scalograms';
+% hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
+% powerRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations';
+phaseRTcorr_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phase_RT_correlations_gabors';
+lfp_root          = '/Volumes/Tbolt_02/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
+
+[chDB_list, chDB_fnames] = get_chStructs_for_analysis;
+
+% eventList = {'cueOn','noseCenterIn','tone','noseCenterOut','noseSideIn'};
+% numEvents = length(eventList);
+% twin = [-1 1];
+
+trialType = 'correctgo';
+numSurrogates = 200;
+
+% WORKING HERE********************************************************************************************************
+for i_chDB = 1 : 4%length(chDB_list)
+    
+    % first, load the relevant channel DBs, if necessary
+    if ~exist(chDB_list{i_chDB}, 'var')
+        chDB_file = fullfile(chDB_directory, chDB_fnames{i_chDB});
+        disp(['loading ' chDB_file]);
+        load( chDB_file );
+    end
+    
+    implantID = implantID_from_ratID(chDB_list{i_chDB}(1:5));
+    subject_gabor_dir = fullfile(gabor_directory, [implantID '_ps']);
+    subject_lfp_dir = fullfile(lfp_root, [implantID '_HF_LFPs']);
+    
+    % get names of all the lfp files
+    cd(subject_lfp_dir);
+    lfpDirStruct = dir([implantID '*.hsdf']);
+    lfpList = cell(1,length(lfpDirStruct));
+    for ii = 1 : length(lfpDirStruct)
+        lfpList{ii} = lfpDirStruct(ii).name;
+    end
+        
+%     subject_gabor_dir = fullfile(hilbert_1Hz_directory, [implantID '_hilbert']);
+%     subject_hilbertDir_025Hz = fullfile(hilbert_025Hz_directory, [implantID '_hilbert']);
+    if ~exist(subject_gabor_dir, 'dir')
+        disp([subject_gabor_dir ' not found. Skipping ' implantID '...'])
+        continue
+    end
+%     if ~exist(subject_hilbertDir_025Hz, 'dir')
+%         disp([subject_hilbertDir_025Hz ' not found. Skipping ' implantID '...'])
+%         continue
+%     end
+    
+    subject_phaseRTcorrdir = fullfile(phaseRTcorr_directory, [implantID '_phaseRTcorr_gabors']);
+    if ~exist(subject_phaseRTcorrdir, 'dir')
+        mkdir(subject_phaseRTcorrdir);
+    end
+    
+    if i_chDB < 5
+        chDB_info = whos( [chDB_list{i_chDB}(1:3) 'Ch*'] );
+    else
+        chDB_info = whos( [chDB_list{i_chDB}(1:5) 'Ch*'] );
+    end
+    channels = eval( chDB_info.name );
+    
+    [RT, ~, sessionList] = collect_RT_MT_by_rat(channels, trialType);
+    numSessions = length( sessionList );
+    
+    % establish RT quantiles for phase analysis
+%     allRT = RT{1};
+%     if numSessions > 1
+%         for iSession = 2 : numSessions
+%             allRT = [allRT, RT{iSession}];
+%         end
+%     end
+%     allRT = sort(allRT);
+%     numRT = length(allRT);
+    
+    for iSession = 1 : numSessions
+
+        cp = initChanParams();
+        cp.session = sessionList{iSession};
+        
+        session_chList = extractChannels( cp, channels );
+        sessionChannels = channels(session_chList);
+        
+        % exclude EMG, reference channels
+        cp = initChanParams();
+        cp.locationSubClass = {'EMG', 'EEGLAM', 'REF'};
+        sessionChannels = excludeChannels(cp, sessionChannels);
+        
+        numCh = length(sessionChannels);
+        if numCh == 0; continue; end
+
+        sessionDate = sessionChannels{1}.date;
+        sessionDate = strrep(sessionDate,'-','');
+        
+        lfp_name_idx = strfind(lfpList,sessionDate);
+        valid_lfp_name = false(1,length(lfpList));
+        for ii = 1 : length(lfpList)
+            valid_lfp_name(ii) = ~isempty(lfp_name_idx{ii});
+        end
+        lfpDuration = 0;
+        if sum(valid_lfp_name) > 1
+            disp(['more than one lfp file for ' sessionDate]);
+        elseif sum(valid_lfp_name) == 0
+            disp(['no lfp file for ' sessionDate]);
+        else
+            full_lfpName = fullfile(subject_lfp_dir, lfpList{valid_lfp_name});
+            lfpDuration = getHSDlength( 'filename', full_lfpName );
+        end
+        
+        gabor_sessionDir = fullfile(subject_gabor_dir, [sessionList{iSession} '_scalograms']);
+        if ~exist(gabor_sessionDir, 'dir'); continue; end
+
+        phaseRTcorr_sessionDir = fullfile(subject_phaseRTcorrdir, sessionList{iSession});
+        if ~exist(phaseRTcorr_sessionDir, 'dir')
+            mkdir(phaseRTcorr_sessionDir);
+        end
+        
+%         gabor_fn = [sessionList{iSession} '_' trialType '_scalograms.mat'];
+%         gabor_fn = fullfile(gabor_sessionDir, gabor_fn);
+%         if ~exist(gabor_fn, 'file')
+%             error([gabor_fn ' could not be found.']);
+%         end
+%         metadata_filename_gabor = [sessionList{iSession} 'gabor_metadata.mat'];
+%         metadata_filename_gabor = fullfile(gabor_sessionDir, metadata_filename_gabor);
+%         metadata_filename_025Hz = [sessionList{iSession} 'hilbert_metadata.mat'];
+%         metadata_filename_025Hz = fullfile(hilbert_sessionDir_025Hz, metadata_filename_025Hz);
+%         if ~exist(metadata_filename_gabor, 'file')
+%             error([metadata_filename_gabor ' could not be found.']);
+%         end
+%         if ~exist(metadata_filename_025Hz, 'file')
+%             error([metadata_filename_025Hz ' could not be found.']);
+%         end
+%         md_1Hz   = load(metadata_filename_1Hz);
+%         md_025Hz = load(metadata_filename_025Hz);
+        
+%         centerFreqs = mean(md_1Hz.metadata.freqBands, 2);
+%         centerFreqs_025Hz = mean(md_025Hz.metadata.freqBands, 2);
+% 
+%         max025Hz = max(centerFreqs_025Hz);
+%         freqList = [centerFreqs_025Hz; centerFreqs_1Hz(centerFreqs_1Hz > max025Hz)];
+%             
+%         numFreqs = length(freqList);
+        
+        
+%         phaseRTcorr_metadata.eventList = eventList;
+%         phaseRTcorr_metadata.twin = twin;
+%         phaseRTcorr_metadata.Fs = md_1Hz.metadata.Fs;
+        phaseRTcorr_metadata.trialType = trialType;
+        
+%         numSamps = round(range(twin) * md_1Hz.metadata.Fs);
+            
+        trialEventParams = getTrialEventParams('correctgo');
+        correctGOtrials = extractTrials2(sessionChannels{1}.trials,trialEventParams);
+        current_RT = RT{iSession};
+        
+        gabor_name = [sessionChannels{1}.name '_' trialType '_scalograms.mat'];
+        gabor_name = fullfile(gabor_sessionDir, gabor_name);
+        load(gabor_name);
+        
+        if correctGOtrials(1).timestamps.cueOn < (1-scalogram_metadata.twin(1))
+            current_RT = current_RT(2:end);
+        end
+        if lfpDuration > 0
+            if (lfpDuration - correctGOtrials(end).timestamps.noseSideOut) < (1+scalogram_metadata.twin(2))
+                current_RT = current_RT(1:end-1);
+            end
+        end
+        current_RT = current_RT(current_RT < 2);   % workaround for a trial for IM365 where the tone timing wasn't recorded; eliminate that trial
+                    
+        for iCh = 1 : numCh
+            
+            ch = sessionChannels{iCh};
+            disp(sprintf('working on session %s, %d of %d; channel %s, %d of %d', ...
+                sessionList{iSession}, iSession, numSessions, ch.name, iCh, numCh))
+            phaseRTcorr_metadata.chName = ch.name;
+            
+            gabor_name = [sessionChannels{iCh}.name '_' trialType '_scalograms.mat'];
+            gabor_name = fullfile(gabor_sessionDir, gabor_name);
+%             hilbert_name_025Hz = ['analytic_' sessionChannels{iCh}.name '.bin'];
+%             hilbert_name_025Hz = fullfile(hilbert_sessionDir_025Hz, hilbert_name_025Hz);
+            if ~exist(gabor_name,'file');continue;end
+            
+            phase_RTcorr_surr_name = ['phase_RT_analysis_gabor_surr_' sessionChannels{iCh}.name '.mat'];
+            phase_RTcorr_surr_name = fullfile(phaseRTcorr_sessionDir, phase_RTcorr_surr_name);
+            
+            % load analytic signal around each event and calculate
+            % correlation coefficients
+            if exist(phase_RTcorr_surr_name, 'file')
+                continue
+            end
+            
+            if iCh > 1; load(gabor_name); end    % the first channel gabor scalograms were loaded earlier
+            phaseRTcorr_metadata.freqs = scalogram_metadata.f;
+            phaseRTcorr_metadata.twin = scalogram_metadata.twin;
+            phaseRTcorr_metadata.t = scalogram_metadata.t;
+            phaseRTcorr_metadata.eventList = scalogram_metadata.eventList;
+            phaseRTcorr_metadata.Fs = scalogram_metadata.Fs;            
+            
+            numEvents = length(phaseRTcorr_metadata.eventList);
+            numSamps = size(W,2);
+            numFreqs = length(phaseRTcorr_metadata.freqs);
+
+            circRTcorr_surr = NaN(numSurrogates, numEvents, numFreqs, numSamps);
+%             circRT_p = NaN(numEvents, numFreqs, numSamps);
+        
+            nTrials = length(current_RT);
+            for iSurr = 1 : numSurrogates
+                for iEvent = 1 : numEvents
+%                     iEvent
+%                     tic
+                    for iFreq = 1 : numFreqs
+    %                     iFreq
+
+    %                     if freqList(iFreq) <= max025Hz
+    %                         hilbertDir = hilbert_025Hz_directory;
+    %                         freqIdx = find(centerFreqs_025Hz == freqList(iFreq));
+    %                     else
+    %                         hilbertDir = hilbert_1Hz_directory;
+    %                         freqIdx = find(centerFreqs_1Hz == freqList(iFreq));
+    %                     end
+
+    %                     ansig = getAnalyticAroundEvent( sessionChannels{iCh}, ...
+    %                                                     freqIdx, ...
+    %                                                     eventList{iEvent}, ...
+    %                                                     trialType, ...
+    %                                                     twin, ...
+    %                                                     'hilbertdir', hilbertDir);
+                        ansig = squeeze(W(iEvent,:,:,iFreq));
+                        freqPhase = angle(ansig)';
+
+                        % GENERATE SURROGATE DISTRIBUTIONS? ALSO, ADD IN A
+                        % CALCULATION WHERE ALL RTs ARE TESTED ACROSS SESSIONS?
+
+
+                        % exclude trials that occur too early to
+                        % get full gabor windows
+
+
+    %                     if length(RT{iSession}) < size(W,
+                        for iSamp = 1 : numSamps
+    %                         [circRTcorr(iEvent, iFreq, iSamp), ...
+    %                             circRT_p(iEvent, iFreq, iSamp)] = ...
+    %                             circ_corrcl(freqPhase(:, iSamp), RT{iSession}');
+                            [circRTcorr_surr(iSurr,iEvent, iFreq, iSamp), ~] = ...
+                                circ_corrcl(freqPhase(:, iSamp), current_RT(randperm(nTrials))');    % NEED RANDOM PERMUTATIONS OF RT HERE
+                        end  
+                    end
+%                     toc
+                end
+            end    % iSurr
+            
+%             phaseRTcorr_surr_mean = squeeze(nanmean(circRTcorr_surr,1));
+%             phaseRTcorr_surr_std = squeeze(nanstd(circRTcorr_surr,0,1));
+            save(phase_RTcorr_surr_name, 'circRTcorr_surr', 'phaseRTcorr_metadata');
+            
+        end
+    end
+    
+end

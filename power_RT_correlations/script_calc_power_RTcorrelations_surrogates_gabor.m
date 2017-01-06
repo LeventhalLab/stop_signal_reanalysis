@@ -1,9 +1,14 @@
-% script_calc_power_RTcorrelations_gabor
+% script_calc_power_RTcorrelations_surrogates_gabor
 
 % UPDATED 10-27-2014
 
 % ALSO NEED TO COMPARE PHASE OF ONGOING OSCILLATIONS IN STOP-SUCCESS VS
 % STOP-FAILURE TRIALS AND NOGO-SUCCESS VS NOGO-FAIL TRIALS
+
+% chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
+% gabor_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/trial_scalograms';
+% powerRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations_gabors';
+% lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
 
 chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
 gabor_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/trial_scalograms';
@@ -17,8 +22,9 @@ lfp_root          = '/Volumes/Tbolt_02/stop-signal reanalysis/high_cutoff_stop-s
 twin = [-1 1];
 
 trialType = 'correctgo';
+numSurrogates = 200;
 
-for i_chDB = 2 : 4%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
 
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -71,7 +77,7 @@ for i_chDB = 2 : 4%length(chDB_list)
 
     for iSession = 1 : numSessions
         
-%         if iSession <= 33; continue; end% && iSession < 40;continue;end
+        if iSession > 33 && iSession < 40;continue;end
 
         cp = initChanParams();
         cp.session = sessionList{iSession};
@@ -118,7 +124,7 @@ for i_chDB = 2 : 4%length(chDB_list)
             mkdir(powerRTcorr_sessionDir);
         end
         
-        powerRTcorr_metadata.trialType = trialType;
+        powerRTcorr_surr_metadata.trialType = trialType;
         
         trialEventParams = getTrialEventParams('correctgo');
         correctGOtrials = extractTrials2(sessionChannels{1}.trials,trialEventParams);
@@ -141,17 +147,18 @@ for i_chDB = 2 : 4%length(chDB_list)
             end
         end
         
-        powerRTcorr_metadata.freqs = scalogram_metadata.f;
-        powerRTcorr_metadata.twin = scalogram_metadata.twin;
-        powerRTcorr_metadata.t = scalogram_metadata.t;
-        powerRTcorr_metadata.eventList = scalogram_metadata.eventList;
-        powerRTcorr_metadata.Fs = scalogram_metadata.Fs;    
+        powerRTcorr_surr_metadata.f = scalogram_metadata.f;
+        powerRTcorr_surr_metadata.twin = scalogram_metadata.twin;
+        powerRTcorr_surr_metadata.t = scalogram_metadata.t;
+        powerRTcorr_surr_metadata.eventList = scalogram_metadata.eventList;
+        powerRTcorr_surr_metadata.Fs = scalogram_metadata.Fs;    
+        powerRTcorr_surr_metadata.numSurrogates = numSurrogates;
         
-        eventList = powerRTcorr_metadata.eventList;
+        eventList = powerRTcorr_surr_metadata.eventList;
             
-        numEvents = length(powerRTcorr_metadata.eventList);
+        numEvents = length(powerRTcorr_surr_metadata.eventList);
         numSamps = size(W,2);
-        numFreqs = length(powerRTcorr_metadata.freqs);
+        numFreqs = length(powerRTcorr_surr_metadata.f);
         
         for iCh = 1 : numCh
             
@@ -164,39 +171,45 @@ for i_chDB = 2 : 4%length(chDB_list)
                 continue;
             end
             
-            power_RTcorr_name = ['power_RTcorr_' sessionChannels{iCh}.name '.mat'];
-            power_RTcorr_name = fullfile(powerRTcorr_sessionDir, power_RTcorr_name);
+            power_RTcorr_surr_name = ['power_RTcorr_surr_' sessionChannels{iCh}.name '.mat'];
+            power_RTcorr_surr_name = fullfile(powerRTcorr_sessionDir, power_RTcorr_surr_name);
             
-            powerRTcorr = NaN(numEvents, numFreqs, numSamps);
+            powerRTcorr_surr = NaN(numSurrogates,numEvents, numFreqs, numSamps);
             
             % load analytic signal around each event and calculate
             % correlation coefficients
-            if exist(power_RTcorr_name, 'file')
+            if exist(power_RTcorr_surr_name, 'file')
                 continue
             end
             
             if iCh > 1; load(gabor_name); end    % the first channel gabor scalograms were loaded earlier
             
             gaborPower = abs(W).^2;
-            for iEvent = 1 : numEvents
-%                 tic
-                disp(sprintf('%s, %s, %d of %d sessions', ...
-                             ch.name, eventList{iEvent}, iSession, numSessions));
-                         
-                for iFreq = 1 : numFreqs
+            nTrials = length(current_RT);
+            for iSurr = 1 : numSurrogates
+                for iEvent = 1 : numEvents
+    %                 tic
+                    disp(sprintf('%s, %s, %d of %d sessions', ...
+                                 ch.name, eventList{iEvent}, iSession, numSessions));
 
-                    for iSamp = 1 : numSamps
-                        [cc, p] = corr(squeeze(gaborPower(iEvent,iSamp,:,iFreq)), current_RT', ...
-                                       'type','spearman');
-                        powerRTcorr(iEvent, iFreq, iSamp) = cc;
+                    for iFreq = 1 : numFreqs
+
+                        for iSamp = 1 : numSamps
+                            [cc, p] = corr(squeeze(gaborPower(iEvent,iSamp,:,iFreq)), current_RT(randperm(nTrials))', ...
+                                           'type','spearman');
+                            powerRTcorr_surr(iSurr, iEvent, iFreq, iSamp) = cc;
+                        end
+
                     end
-                        
+    %                 toc
                 end
-%                 toc
-            end
+            end    % iSurr
 
-            save(power_RTcorr_name, 'powerRTcorr', 'powerRTcorr_metadata');
-            disp(sprintf('%s saved', power_RTcorr_name));
+%             powerRTcorr_surr_mean = squeeze(nanmean(powerRTcorr_surr,1));
+%             powerRTcorr_surr_std = squeeze(nanstd(powerRTcorr_surr,0,1));
+%             save(power_RTcorr_surr_name, 'powerRTcorr_surr_mean', 'powerRTcorr_surr_std','powerRTcorr_surr_metadata');
+            save(power_RTcorr_surr_name, 'powerRTcorr_surr','powerRTcorr_surr_metadata');
+            fprintf('%s saved\n', power_RTcorr_surr_name);
             
         end
     end

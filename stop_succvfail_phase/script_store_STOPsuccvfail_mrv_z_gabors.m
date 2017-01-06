@@ -3,11 +3,15 @@
 % script to go through all STOP sessions and see if there are consistent
 % phase differences between STOP-success and STOP-failure trials
 
-chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
+% chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
 % hilbert_1Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 1 Hz bins';
 % hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
-phase_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_phase_gabors';
-power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power_gabors';
+% phase_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_phase_gabors';
+% power_stop_succvfail_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop_succvfail_power_gabors';
+
+chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
+phase_stop_succvfail_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/stop_succvfail_phase_gabors';
+power_stop_succvfail_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/stop_succvfail_power_gabors';
 
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
@@ -102,19 +106,19 @@ for i_chDB = 1 : 4%length(chDB_list)
         
         vecDiffmat_z_saveName = ['vecDiff_z_stopSuccvFail_' sessionList{iSession} '_gabors.mat'];
         vecDiffmat_z_saveName = fullfile(session_stopPhaseDir, vecDiffmat_z_saveName);
-        if exist(vecDiffmat_z_saveName,'file')
-            load(vecDiffmat_z_saveName);
-            if STOPmrv_z_metadata.num_regions_complete == numRegions; continue; end
-            num_ch_per_region = STOPmrv_z_metadata.num_ch_per_region;
-        else
+%         if exist(vecDiffmat_z_saveName,'file')
+%             load(vecDiffmat_z_saveName);
+%             if STOPmrv_z_metadata.num_regions_complete == numRegions; continue; end
+%             num_ch_per_region = STOPmrv_z_metadata.num_ch_per_region;
+%         else
 %             mrvDiff_by_region = cell(1, numRegions);
-            mrv_by_region = cell(1, numRegions);
+            mrv_z_by_region = cell(1, numRegions);
 %             mean_mrvDiff = zeros(numRegions,numEventTypes,numFreqs,numSamps);    % left over from Hilbert version
             mean_mrvDiff = zeros(numRegions, numEventTypes, numSamps, numFreqs);
-            mean_mrv = zeros(numRegions, 2, numEventTypes, numSamps, numFreqs);   % 1 for correct, 2 for failed STOP
+            mean_mrv_z = zeros(numRegions, numEventTypes, numSamps, numFreqs);   % 1 for correct, 2 for failed STOP
             num_ch_per_region = zeros(1, numRegions);
             STOPmrv_z_metadata.num_regions_complete = 0;
-        end
+%         end
 
         for iRegion = STOPmrv_z_metadata.num_regions_complete + 1 : numRegions
             cp = initChanParams();
@@ -125,7 +129,7 @@ for i_chDB = 1 : 4%length(chDB_list)
             numRegionChannels = length(regionChannels);
             
 %             mrvDiff_by_region{iRegion} = zeros(numRegionChannels, numEventTypes, numFreqs, numSamps);
-            mrv_z_by_region{iRegion} = zeros(numRegionChannels, 2, numEventTypes, numSamps, numFreqs);
+            mrv_z_by_region{iRegion} = zeros(numRegionChannels, numEventTypes, numSamps, numFreqs);
             
             num_ch_per_region(iRegion) = numRegionChannels;
             STOPmrv_z_metadata.chNames{iRegion} = cell(1, numRegionChannels);
@@ -138,7 +142,7 @@ for i_chDB = 1 : 4%length(chDB_list)
                 
                 mrv_z_mat_saveName = ['mrv_z_stopSuccvFail_' ch.name '_gabor.mat'];
                 mrv_z_mat_saveName = fullfile(session_stopPhaseDir, mrv_z_mat_saveName);
-                if exist(mrv_z_mat_saveName, 'file'); continue; end
+%                 if exist(mrv_z_mat_saveName, 'file'); continue; end
                 
                 mrv_mat_saveName = ['mrv_stopSuccvFail_' ch.name '_gabor.mat'];
                 mrv_mat_saveName = fullfile(session_stopPhaseDir, mrv_mat_saveName);
@@ -154,28 +158,35 @@ for i_chDB = 1 : 4%length(chDB_list)
                 
                 load(mrv_mat_saveName);
                 load(surr_mrv_mat_saveName);
+                STOPmrv_z_metadata.numSurrogates = surr_STOPmrv_metadata.numSurrogates;
                 
-                mrv_amp = sqrt(re_mrv.^2 + im_mrv.^2);
+                mrv_diff = (re_mrv(1,:,:,:) - re_mrv(2,:,:,:)) + ...
+                            1i*(im_mrv(1,:,:,:) - im_mrv(2,:,:,:));    % correct - failed
+                mrv_diff = squeeze(mrv_diff);
+                mrv_amp = abs(mrv_diff);   %sqrt(re_mrv.^2 + im_mrv.^2);
                 mrv_z = (mrv_amp - mean_surr_diff) ./ mean_surr_diff;
                 
 %                 mrv(1, :, :, :) = squeeze(mean(exp(1i*correctSTOP_phase), 3));
 %                 mrv(2, :, :, :) = squeeze(mean(exp(1i*failedSTOP_phase), 3));
-%                 mrv_by_region{iRegion}(iCh, :, :, :, :) = mrv;
+                mrv_z_by_region{iRegion}(iCh, :, :, :) = mrv_z;
                 
-                re_mrv_z = real(mrv_z); im_mrv_z = imag(mrv_z);
+%                 re_mrv_z = real(mrv_z); im_mrv_z = imag(mrv_z);
                 
-                save(mrv_z_mat_saveName, 're_mrv_z','im_mrv_z','STOPmrv_z_metadata');
+                save(mrv_z_mat_saveName, 'mrv_z','STOPmrv_z_metadata');
                     
             end    % for iCh...
-            mean_mrv(iRegion, :, :, :, :) = squeeze(mean(mrv_by_region{iRegion}, 1));
-            re_mean_mrv = real(mean_mrv);
-            im_mean_mrv = imag(mean_mrv);
+            mean_mrv_z(iRegion, :, :, :) = squeeze(mean(mrv_z_by_region{iRegion}, 1));
+            if any(isnan(mrv_z_by_region{iRegion}(:)))
+                keyboard;
+            end
+%             re_mean_mrv = real(mean_mrv);
+%             im_mean_mrv = imag(mean_mrv);
 %             mean_mrvDiff(iRegion, :, : ,:) = squeeze(mean(mrvDiff_by_region{iRegion}, 1));
             
             STOPmrv_z_metadata.num_ch_per_region = num_ch_per_region;
             STOPmrv_z_metadata.num_regions_complete = iRegion;
 
-            save(vecDiffmat_z_saveName, 're_mean_mrv', 'im_mean_mrv', 'STOPmrv_z_metadata');
+            save(vecDiffmat_z_saveName, 'mean_mrv_z', 'STOPmrv_z_metadata');
             
         end    % for iRegion...
         

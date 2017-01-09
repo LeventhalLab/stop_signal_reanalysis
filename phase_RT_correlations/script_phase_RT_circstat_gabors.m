@@ -3,12 +3,12 @@
 % ALSO NEED TO COMPARE PHASE OF ONGOING OSCILLATIONS IN STOP-SUCCESS VS
 % STOP-FAILURE TRIALS AND NOGO-SUCCESS VS NOGO-FAIL TRIALS
 
-chDB_directory  = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
-gabor_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/trial_scalograms';
+chDB_directory  = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
+gabor_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/trial_scalograms';
 % hilbert_025Hz_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/Hilbert transformed LFP 025 Hz bins';
 % powerRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/power_RT_correlations';
-phaseRTcorr_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phase_RT_correlations_gabors';
-lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
+phaseRTcorr_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phase_RT_correlations_gabors';
+lfp_root          = '/Volumes/Tbolt_02/stop-signal reanalysis/high_cutoff_stop-signal LFPs';
 
 [chDB_list, chDB_fnames] = get_chStructs_for_analysis;
 
@@ -18,7 +18,7 @@ lfp_root          = '/Volumes/PublicLeventhal2/dan/stop-signal reanalysis/high_c
 
 trialType = 'correctgo';
 
-for i_chDB = 10 : length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')

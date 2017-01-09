@@ -140,7 +140,7 @@ for i_chDB = 1 : 4 %length(chDB_list)
 %                 load(powerRTsurr_name);
             else
                 fprintf('%s does not exist, skipping...\n', powerRT_name);
-                if iCh < numCh || ~isvalid(h_powerCorr_fig)    % if the figure was already deleted, don't save and delete it again
+                if iCh < numCh
                     continue;
                 else    % need to close out the previous figure and save it
                     h_figAxes = createFigAxes(h_powerCorr_fig);
@@ -163,7 +163,6 @@ for i_chDB = 1 : 4 %length(chDB_list)
                     savefig(h_powerCorr_fig,cur_figName,'compact');
 
                     close(h_powerCorr_fig);
-                    continue;
                 end
             end
             

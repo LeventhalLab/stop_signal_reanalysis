@@ -10,6 +10,9 @@ chDB_directory         = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal d
 phaseRTcorr_directory  = '/Volumes/Tbolt_02/stop-signal reanalysis/phase_RT_correlations_gabors';
 RTcorr_plots_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phase_RT correlation gabor plots';
 
+ROI_list = {'eegorb','cpu','gp','stn','snr'};
+numRegions = length(ROI_list);
+
 [chDB_list, chDB_fnames] = get_chStructs_for_analysis;
 channels_per_page = 5;
 
@@ -139,13 +142,37 @@ for i_chDB = 1 : 4 %length(chDB_list)
                 load(phaseRT_name);
 %                 load(phaseRTsurr_name);
             else
-                fprintf('%s does not exist, skipping...', phaseRT_name);
-                continue;
+                fprintf('%s does not exist, skipping...\n', phaseRT_name);
+                if iCh < numCh || ~isvalid(h_phaseCorr_fig)    % if the figure was already deleted, don't save and delete it again
+                    continue;
+                else
+                    h_figAxes = createFigAxes(h_phaseCorr_fig);
+
+                    textStr{1} = ['Circular correlation coefficient between phase and RT'];
+                    textStr{2} = page_ChList;
+                    textStr{3} = page_regionList;
+    %                 textStr{4} = ['number of channels per region: ' page_numChList];
+                    textStr{4} = sprintf('color limits: %d to %d',colorLim(1),colorLim(2));
+
+                    cur_PDFname = sprintf('%s_%02d.pdf',PDFname,numPagesForSession);
+                    cur_PDFname = fullfile(session_RTcorr_plots_directory, cur_PDFname);
+                    cur_figName = sprintf('%s_%02d.fig',PDFname,numPagesForSession);
+                    cur_figName = fullfile(session_RTcorr_plots_directory, cur_figName);
+
+                    axes(h_figAxes);
+                    text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
+
+                    print(cur_PDFname, '-dpdf');
+                    savefig(h_phaseCorr_fig,cur_figName,'compact');
+
+                    close(h_phaseCorr_fig);
+                    continue;
+                end
             end
             
             regionIdx = find(strcmpi(ch.location.subclass, sessionRegionList));
             numChPlots = numChPlots + 1;
-            rowNum = rem(iCh, channels_per_page);
+            rowNum = rem(numChPlots, channels_per_page);
             if rowNum == 0;rowNum = channels_per_page;end
             
             if rowNum == 1
@@ -191,7 +218,7 @@ for i_chDB = 1 : 4 %length(chDB_list)
                 
             end
             
-            if rem(iCh, figProps.m) == 0 || iCh == numCh
+            if rem(numChPlots, figProps.m) == 0 || iCh == numCh
                 h_figAxes = createFigAxes(h_phaseCorr_fig);
 
                 textStr{1} = ['Circular correlation coefficient between phase and RT'];

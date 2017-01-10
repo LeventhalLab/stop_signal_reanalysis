@@ -1,7 +1,7 @@
 % script_plot_phaseAmp_Gabors
 
-chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
-phaseAmp_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phaseAmp_windowed_Gabors';
+chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
+phaseAmp_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phaseAmp_windowed_Gabors';
 
 makePlots = true;
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
@@ -39,15 +39,15 @@ plotFreqs{3} = 1;    % dummy variable to make the indexing work later
 totalPlotTypes = length(var_to_plot) * (1 + length(phase_freq) + length(amp_freq));
 % numPlotTypes = length(plotTypes);
 
-desired_amp_freq_ticks = [10,20,50,80];    % check that these frequencies are the ones actually being marked
-desired_phase_freq_ticks = [2,4,8,16,20];
+desired_amp_freq_ticks = [10,20,40,80,250];    % check that these frequencies are the ones actually being marked
+desired_phase_freq_ticks = [2,4,8,16,32,64];
 
 cmap = 'jet';
 
 if exist('region_phaseAmp_metadata','var')
     clear region_phaseAmp_metadata;
 end
-for i_chDB = 5 : length(chDB_list)
+for i_chDB = 2 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -73,7 +73,10 @@ for i_chDB = 5 : length(chDB_list)
     sessionList = getSessionsfromChannelDB( channels );
     numSessions = length(sessionList);
     
-    for iTrialType = 1 : 1%length(trialTypeList)
+    for iTrialType = 1 : length(trialTypeList)
+        if i_chDB == 1 && iTrialType == 1   % that one was already calculated.
+            continue;
+        end
         trialType = trialTypeList{iTrialType};
         
 %         switch iTrialType
@@ -152,7 +155,7 @@ for i_chDB = 5 : length(chDB_list)
             region_mean_saveName = ['gaborPhaseAmp_byRegion_' trialTypeList{iTrialType} '_' sessionList{iSession} '.mat'];
             region_mean_saveName = fullfile(phaseAmp_sessionDir, region_mean_saveName);
 
-            if exist(region_mean_saveName, 'file'); continue; end  % comment this line out to make plots whether means have been saved or not
+%             if exist(region_mean_saveName, 'file'); continue; end  % comment this line out to make plots whether means have been saved or not
         
             phaseAmp_surr_name_mrl = [sessionChannels{1}.name '_' trialType '_phase_amp_Gabor_surrogates.mat'];
             phaseAmp_surr_name_mrl = fullfile(phaseAmp_sessionDir, phaseAmp_surr_name_mrl);
@@ -278,10 +281,12 @@ for i_chDB = 5 : length(chDB_list)
                                                     toPlot = squeeze(mrl_by_region{iRegion}(iCh, iEventType, phase_freq_idx(iFreq), :, :));
                                                     colorLim = mrl_clim;
                                                     textStr{1} = sprintf('mrl, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                    textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                                 else
                                                     toPlot = squeeze(mrl_z_by_region{iRegion}(iCh, iEventType, phase_freq_idx(iFreq), :, :));
                                                     colorLim = z_clim;
                                                     textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                    textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                                 end
                                                 x = t;
                                                 y = 1:length(amp_f);
@@ -294,10 +299,12 @@ for i_chDB = 5 : length(chDB_list)
                                                     toPlot = squeeze(mrl_by_region{iRegion}(iCh, iEventType, :, amp_freq_idx(iFreq), :));
                                                     colorLim = mrl_clim;
                                                     textStr{1} = sprintf('mrl, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                    textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                                 else
                                                     toPlot = squeeze(mrl_z_by_region{iRegion}(iCh, iEventType, :, amp_freq_idx(iFreq), :));
                                                     colorLim = z_clim;
                                                     textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                    textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                                 end
                                                 x = t;
                                                 y = 1:length(phase_f);
@@ -310,10 +317,12 @@ for i_chDB = 5 : length(chDB_list)
                                                     toPlot = squeeze(mean(mrl_by_region{iRegion}(iCh, iEventType, :, :, :), 5))';
                                                     colorLim = mrl_clim;
                                                     textStr{1} = 'mrl, phase-amplitude coupling, average across time';
+                                                    textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                                 else
                                                     toPlot = squeeze(mean(mrl_z_by_region{iRegion}(iCh, iEventType, :, :, :), 5))';
                                                     colorLim = z_clim;
                                                     textStr{1} = 'mrl z-score, phase-amplitude coupling, average across time';
+                                                    textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                                 end
                                                 x = 1:length(phase_f);
                                                 y = 1:length(amp_f);
@@ -324,7 +333,9 @@ for i_chDB = 5 : length(chDB_list)
                                         end
 
                                         axes(h_axes{iVar, iPlotType}(iFreq, rowNum, iEventType));
-                                        imagesc(x,y,toPlot);    % need to check that toPlot is in the correct orientation
+                                        h_pcolor = pcolor(x,y,toPlot);    % need to check that toPlot is in the correct orientation
+                                        h_pcolor.EdgeColor = 'none';
+                                        set(gca,'yscale','log');
                                         set(gca,'ydir','normal',...
                                                 'clim',colorLim,...
                                                 'xtick',x_ticks,...
@@ -357,13 +368,17 @@ for i_chDB = 5 : length(chDB_list)
                                         textStr{5} = ['color limits: ' num2str(colorLim(1)) ' to ' num2str(colorLim(2))];
                                         text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
                                     
-                                        pdfSaveName = [fig_saveName{iVar, iPlotType}{iFreq} '_' num2str(numPages) '.pdf'];
+                                        pdfSaveName = sprintf('%s_%s.pdf',fig_saveName{iVar, iPlotType}{iFreq}, num2str(numPages));
+                                        figSaveName = sprintf('%s_%s.fig',fig_saveName{iVar, iPlotType}{iFreq}, num2str(numPages));
 %                                         if numPages == 1
 %                                             export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-nocrop');
 %                                         else
 %                                             export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append','-nocrop');
 %                                         end
-                                        export_fig(pdfSaveName,'-pdf','-q101','-painters','-nocrop');
+%                                         export_fig(pdfSaveName,'-pdf','-q101','-painters','-nocrop');
+                                        print(pdfSaveName,'-dpdf');
+                                        savefig(h_fig{iVar, iPlotType}(iFreq),figSaveName,'compact');
+                                        
                                         close(h_fig{iVar, iPlotType}(iFreq));
                                     end
 
@@ -425,10 +440,12 @@ for i_chDB = 5 : length(chDB_list)
                                                 toPlot = squeeze(mean_mrl(iRegion, iEventType, phase_freq_idx(iFreq), :, :));
                                                 colorLim = mrl_clim;
                                                 textStr{1} = sprintf('mrl, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                             else
                                                 toPlot = squeeze(mean_mrl_z(iRegion, iEventType, phase_freq_idx(iFreq), :, :));
                                                 colorLim = z_clim;
                                                 textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                             end
                                                 x = t;
                                                 y = 1:length(amp_f);
@@ -441,10 +458,12 @@ for i_chDB = 5 : length(chDB_list)
                                                 toPlot = squeeze(mean_mrl(iRegion, iEventType, :, amp_freq_idx(iFreq), :));
                                                 colorLim = mrl_clim;
                                                 textStr{1} = sprintf('mrl, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                             else
                                                 toPlot = squeeze(mean_mrl_z(iRegion, iEventType, :, amp_freq_idx(iFreq), :));
                                                 colorLim = z_clim;
                                                 textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                                textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                             end
                                                 x = t;
                                                 y = 1:length(phase_f);
@@ -457,10 +476,12 @@ for i_chDB = 5 : length(chDB_list)
                                                 toPlot = squeeze(mean(mean_mrl(iRegion, iEventType, :, :, :), 5))';
                                                 colorLim = mrl_clim;
                                                 textStr{1} = 'mrl, phase-amplitude coupling, average across time';
+                                                textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                             else
                                                 toPlot = squeeze(mean(mean_mrl_z(iRegion, iEventType, :, :, :), 5))';
                                                 colorLim = z_clim;
                                                 textStr{1} = 'mrl z-score, phase-amplitude coupling, average across time';
+                                                textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                             end
                                                 x = 1:length(phase_f);
                                                 y = 1:length(amp_f);
@@ -471,7 +492,9 @@ for i_chDB = 5 : length(chDB_list)
                                     end
 
                                     axes(h_axes{iVar, iPlotType}(iFreq, rowNum, iEventType));
-                                    imagesc(x,y,toPlot);    % need to check that toPlot is in the correct orientation
+                                    h_pcolor = pcolor(x,y,toPlot);    % need to check that toPlot is in the correct orientation
+                                    h_pcolor.EdgeColor = 'none';
+                                    set(gca,'yscale','log');
                                     set(gca,'ydir','normal',...
                                             'clim',colorLim,...
                                             'xtick',x_ticks,...
@@ -503,8 +526,13 @@ for i_chDB = 5 : length(chDB_list)
                                     textStr{4} = page_numChList;
                                     text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
 
-                                    pdfSaveName = [fig_saveName{iVar, iPlotType}{iFreq} '_' num2str(numPages) '.pdf'];
-                                    export_fig(pdfSaveName,'-pdf','-q101','-painters','-append','-nocrop');
+%                                     pdfSaveName = [fig_saveName{iVar, iPlotType}{iFreq} '_' num2str(numPages) '.pdf'];
+                                    pdfSaveName = sprintf('%s_%s.pdf',fig_saveName{iVar, iPlotType}{iFreq}, num2str(numPages));
+                                    figSaveName = sprintf('%s_%s.fig',fig_saveName{iVar, iPlotType}{iFreq}, num2str(numPages));
+%                                     export_fig(pdfSaveName,'-pdf','-q101','-painters','-append','-nocrop');
+                                    print(pdfSaveName,'-dpdf');
+                                    savefig(h_fig{iVar, iPlotType}(iFreq),figSaveName,'compact');
+                                    
                                     close(h_fig{iVar, iPlotType}(iFreq));
                                 end
 

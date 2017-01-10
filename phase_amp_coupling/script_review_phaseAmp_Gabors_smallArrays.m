@@ -1,7 +1,7 @@
-% script_review_phaseAmp_Gabors
+% script_review_phaseAmp_Gabors_smallArrays
 
-chDB_directory    = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/stop-signal data structures';
-phaseAmp_directory = '/Volumes/PublicLeventhal1/dan/stop-signal reanalysis/phaseAmp_windowed_Gabors';
+chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
+phaseAmp_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phaseAmp_windowed_Gabors';
 
 makePlots = true;
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
@@ -42,7 +42,7 @@ totalPlotTypes = length(var_to_plot) * (1 + length(phase_freq) + length(amp_freq
 desired_amp_freq_ticks = [10,20,50,80];    % check that these frequencies are the ones actually being marked
 desired_phase_freq_ticks = [2,4,8,16,20];
 
-for i_chDB = 4 : 4%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -74,7 +74,7 @@ for i_chDB = 4 : 4%length(chDB_list)
             mkdir(subject_trialType_dir);
         end
         mat_saveName = fullfile(subject_trialType_dir, mat_saveName);
-        if exist(mat_saveName,'file');continue;end
+%         if exist(mat_saveName,'file');continue;end
         
         mat_z_saveName = [implantID '_phaseAmp_' trialTypeList{iTrialType} '_z_Gabor_summary.mat'];
         mat_z_saveName = fullfile(subject_trialType_dir, mat_z_saveName);
@@ -183,7 +183,10 @@ for i_chDB = 4 : 4%length(chDB_list)
                 
                 temp = squeeze(mean_mrl(iSessionRegion,:,:,:,:));
                 temp_z = squeeze(mean_mrl_z(iSessionRegion,:,:,:,:));
-                if any(isnan(temp(:))) || any(isnan(temp_z(:)))   % if there are any NaNs for the current session-region, skip adding it into the mean
+%                 if any(isnan(temp(:))) || any(isnan(temp_z(:)))   % if there are any NaNs for the current session-region, skip adding it into the mean
+%                     continue;
+%                 end
+                if region_phaseAmp_metadata.num_ch_per_region(iSessionRegion) == 0
                     continue;
                 end
                 if size(mean_mrl_acrossSessions, 3) == 1    % indexing issue related to "squeezing" too much if there is only one eventType
@@ -262,10 +265,12 @@ for i_chDB = 4 : 4%length(chDB_list)
                                         toPlot = squeeze(mean_mrl_byRegion(iRegion, iEventType, phase_freq_idx(iFreq), :, :));
                                         colorLim = mrl_clim;
                                         textStr{1} = sprintf('mrl, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                        textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                     else
                                         toPlot = squeeze(mean_mrl_z_byRegion(iRegion, iEventType, phase_freq_idx(iFreq), :, :));
                                         colorLim = z_clim;
                                         textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant phase freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                        textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                     end
                                     x = t;
                                     y = 1:length(amp_f);
@@ -278,10 +283,12 @@ for i_chDB = 4 : 4%length(chDB_list)
                                         toPlot = squeeze(mean_mrl_byRegion(iRegion, iEventType, :, amp_freq_idx(iFreq), :));
                                         colorLim = mrl_clim;
                                         textStr{1} = sprintf('mrl, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                        textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                     else
                                         toPlot = squeeze(mean_mrl_z_byRegion(iRegion, iEventType, :, amp_freq_idx(iFreq), :));
                                         colorLim = z_clim;
                                         textStr{1} = sprintf('mrl z-score, phase-amplitude coupling, constant amplitude freq = %f Hz', plotFreqs{iPlotType}(iFreq));
+                                        textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                     end
                                     x = t;
                                     y = 1:length(phase_f);
@@ -294,10 +301,12 @@ for i_chDB = 4 : 4%length(chDB_list)
                                         toPlot = squeeze(mean(mean_mrl_byRegion(iRegion, iEventType, :, :, :), 5))';
                                         colorLim = mrl_clim;
                                         textStr{1} = 'mrl, phase-amplitude coupling, average across time';
+                                        textStr{5} = sprintf('color limits: %f to %f', mrl_clim(1), mrl_clim(2));
                                     else
                                         toPlot = squeeze(mean(mean_mrl_z_byRegion(iRegion, iEventType, :, :, :), 5))';
                                         colorLim = z_clim;
                                         textStr{1} = 'mrl z-score, phase-amplitude coupling, average across time';
+                                        textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                     end
                                     x = 1:length(phase_f);
                                     y = 1:length(amp_f);
@@ -308,7 +317,9 @@ for i_chDB = 4 : 4%length(chDB_list)
                             end
 
                             axes(h_axes{iVar, iPlotType}(iFreq, rowNum, iEventType));
-                            imagesc(x,y,toPlot);    % need to check that toPlot is in the correct orientation
+                            h_pcolor = pcolor(x,y,toPlot);    % need to check that toPlot is in the correct orientation
+                            h_pcolor.EdgeColor = 'none';
+                            set(gca,'yscale','log');
                             set(gca,'ydir','normal',...
                                     'clim',colorLim,...
                                     'xtick',x_ticks,...
@@ -339,11 +350,17 @@ for i_chDB = 4 : 4%length(chDB_list)
                             textStr{3} = page_regionList;
                             textStr{4} = ['Number of sessions in average: ' numSessions_perRegionList];
                             text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
-                            if numPages == 1
-                                export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-nocrop');
-                            else
-                                export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append','-nocrop');
-                            end
+                            
+                            cur_PDFname = sprintf('%s_%02d.pdf',fig_saveName{iVar, iPlotType}{iFreq},numPages);
+                            cur_figName = sprintf('%s_%02d.fig',fig_saveName{iVar, iPlotType}{iFreq},numPages);
+%                             if numPages == 1
+%                                 export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-nocrop');
+%                             else
+%                                 export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-append','-nocrop');
+%                             end
+                            print(cur_PDFname, '-dpdf');
+                            savefig(h_fig{iVar, iPlotType}(iFreq),cur_figName,'compact');
+                            
                             close(h_fig{iVar, iPlotType}(iFreq));
                         end
                             

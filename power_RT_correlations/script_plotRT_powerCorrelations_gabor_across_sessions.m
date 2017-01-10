@@ -11,6 +11,9 @@ chDB_directory         = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal d
 powerRTcorr_directory  = '/Volumes/Tbolt_02/stop-signal reanalysis/power_RT_correlations_gabors';
 RTcorr_plots_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/power_RT correlation gabor plots';
 
+ROI_list = {'eegorb','cpu','gp','stn','snr'};
+numRegions = length(ROI_list);
+
 [chDB_list, chDB_fnames, ~, ~] = get_chStructs_for_analysis;
 
 y_zoom_lim = [1 100];   % for more focused plot
@@ -45,6 +48,14 @@ for i_chDB = 1 : 4%length(chDB_list)
     end
     channels = eval( chDB_info.name );
         
+    % COMMENT OUT THESE LINES TO LOOK AT ALL REGIONS
+    cp = initChanParams();
+    cp.locationSubClass = ROI_list;    
+    chList = extractChannels( cp, channels );
+    channels = channels(chList);
+    
+    
+    
     cp = initChanParams();
     cp.locationSubClass = {'EMG', 'EEGLAM', 'REF'};
     channels = excludeChannels(cp, channels);
@@ -189,7 +200,7 @@ for i_chDB = 1 : 4%length(chDB_list)
     save(powerRTcorr_summary_name, 'region_RTpower_mean', 'powerRTcorr_acrossSessions_metadata');
     
     % now make the summary plots
-    powerRT_summary_plot_name = [implantID '_power_RTcorr_gabor_summary.pdf'];
+    powerRT_summary_plot_name = [implantID '_power_RTcorr_gabor_summary'];
     
     numPages = 0;
     for i_allRegion = 1 : num_allRegions
@@ -243,9 +254,9 @@ for i_chDB = 1 : 4%length(chDB_list)
             textStr{4} = sprintf('color limits: %d to %d',colorLim(1),colorLim(2));
 
             cur_PDFname = sprintf('%s_%02d.pdf',powerRT_summary_plot_name,numPages);
-            cur_PDFname = fullfile(session_RTcorr_plots_directory, cur_PDFname);
+            cur_PDFname = fullfile(subject_RTcorr_plots_directory, cur_PDFname);
             cur_figName = sprintf('%s_%02d.fig',powerRT_summary_plot_name,numPages);
-            cur_figName = fullfile(session_RTcorr_plots_directory, cur_figName);
+            cur_figName = fullfile(subject_RTcorr_plots_directory, cur_figName);
 
             axes(h_figAxes);
             text('units','centimeters','position',[3, 8*2.54], 'string',textStr);

@@ -2,6 +2,7 @@
 
 chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
 phaseAmp_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phaseAmp_windowed_Gabors';
+phaseAmp_plot_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phaseAmp_windowed_Gabors_plots';
 
 makePlots = true;
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
@@ -47,7 +48,7 @@ cmap = 'jet';
 if exist('region_phaseAmp_metadata','var')
     clear region_phaseAmp_metadata;
 end
-for i_chDB = 2 : 4%length(chDB_list)
+for i_chDB = 1 : 4%length(chDB_list)
     
     % first, load the relevant channel DBs, if necessary
     if ~exist(chDB_list{i_chDB}, 'var')
@@ -67,6 +68,11 @@ for i_chDB = 2 : 4%length(chDB_list)
         continue;
     end
     
+    subject_phaseAmp_plot_dir = fullfile(phaseAmp_plot_directory, [implantID '_phase_amp']);
+    if ~exist(subject_phaseAmp_plot_dir, 'dir')
+        mkdir(subject_phaseAmp_plot_dir);
+    end
+    
     chDB_info = whos( [chDB_list{i_chDB}(1:3) 'Ch*'] );
     channels = eval( chDB_info.name );
     
@@ -74,9 +80,9 @@ for i_chDB = 2 : 4%length(chDB_list)
     numSessions = length(sessionList);
     
     for iTrialType = 1 : length(trialTypeList)
-        if i_chDB == 1 && iTrialType == 1   % that one was already calculated.
-            continue;
-        end
+%         if i_chDB == 2 && iTrialType < 3   % that one was already calculated.
+%             continue;
+%         end
         trialType = trialTypeList{iTrialType};
         
 %         switch iTrialType
@@ -118,6 +124,11 @@ for i_chDB = 2 : 4%length(chDB_list)
             phaseAmp_sessionDir = fullfile(subject_phaseAmpdir, sessionList{iSession}, [sessionList{iSession} '_' trialType]);
             if ~exist(phaseAmp_sessionDir, 'dir'); continue; end
     
+            session_phaseAmp_plot_dir = fullfile(subject_phaseAmp_plot_dir, sessionList{iSession}, [sessionList{iSession} '_' trialType]);
+            if ~exist(session_phaseAmp_plot_dir, 'dir')
+                mkdir(session_phaseAmp_plot_dir);
+            end
+            
             fig_saveName = cell(length(var_to_plot), length(plotTypes));
             for iVar = 1 : length(var_to_plot)
                 for iPlotType = 1 : length(plotTypes)
@@ -127,7 +138,7 @@ for i_chDB = 2 : 4%length(chDB_list)
                         freqStr = sprintf('%04.0f',plotFreqs{iPlotType}(iFreq));
                         fig_saveName{iVar, iPlotType}{iFreq} = ...
                             ['gaborPhaseAmp_' trialTypeList{iTrialType} '_' var_to_plot{iVar} '_' plotTypes{iPlotType} '_' freqStr '_' sessionList{iSession}];
-                        fig_saveName{iVar, iPlotType}{iFreq} = fullfile(phaseAmp_sessionDir, fig_saveName{iVar, iPlotType}{iFreq});
+                        fig_saveName{iVar, iPlotType}{iFreq} = fullfile(session_phaseAmp_plot_dir, fig_saveName{iVar, iPlotType}{iFreq});
                     end
 
                 end    % for iType...
@@ -368,8 +379,8 @@ for i_chDB = 2 : 4%length(chDB_list)
                                         textStr{5} = ['color limits: ' num2str(colorLim(1)) ' to ' num2str(colorLim(2))];
                                         text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
                                     
-                                        pdfSaveName = sprintf('%s_%s.pdf',fig_saveName{iVar, iPlotType}{iFreq}, num2str(numPages));
-                                        figSaveName = sprintf('%s_%s.fig',fig_saveName{iVar, iPlotType}{iFreq}, num2str(numPages));
+                                        pdfSaveName = sprintf('%s_%02d.pdf',fig_saveName{iVar, iPlotType}{iFreq}, numPages);
+                                        figSaveName = sprintf('%s_%02d.fig',fig_saveName{iVar, iPlotType}{iFreq}, numPages);
 %                                         if numPages == 1
 %                                             export_fig(fig_saveName{iVar, iPlotType}{iFreq},'-pdf','-q101','-painters','-nocrop');
 %                                         else
@@ -527,8 +538,8 @@ for i_chDB = 2 : 4%length(chDB_list)
                                     text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
 
 %                                     pdfSaveName = [fig_saveName{iVar, iPlotType}{iFreq} '_' num2str(numPages) '.pdf'];
-                                    pdfSaveName = sprintf('%s_%s.pdf',fig_saveName{iVar, iPlotType}{iFreq}, num2str(numPages));
-                                    figSaveName = sprintf('%s_%s.fig',fig_saveName{iVar, iPlotType}{iFreq}, num2str(numPages));
+                                    pdfSaveName = sprintf('%s_%02d.pdf',fig_saveName{iVar, iPlotType}{iFreq}, numPages);
+                                    figSaveName = sprintf('%s_%02d.fig',fig_saveName{iVar, iPlotType}{iFreq}, numPages);
 %                                     export_fig(pdfSaveName,'-pdf','-q101','-painters','-append','-nocrop');
                                     print(pdfSaveName,'-dpdf');
                                     savefig(h_fig{iVar, iPlotType}(iFreq),figSaveName,'compact');

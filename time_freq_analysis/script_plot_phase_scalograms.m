@@ -219,7 +219,7 @@ for i_chDB = 1:4%length(chDB_list)
                         close(h_fig);
                     end
                 end    % for iCh...
-                mean_sessionRegionMRL(iSession, iRegion, :, :, :) = squeeze(mean(mean_chPower,1));
+                mean_sessionRegionMRL(iSession, iRegion, :, :, :) = squeeze(mean(mean_chMRL,1));
                 
             end    % for iRegion...
             % now make a page of plots with the average for each region for
@@ -329,13 +329,17 @@ for i_chDB = 1:4%length(chDB_list)
                 page_regionList = ROI_list{iRegion};
                 numPages = numPages + 1;
             else
-                page_regionList = [page_regionList ', ' ch.name];
+                page_regionList = [page_regionList ', ' ROI_list{iRegion}];
             end
             
             for iEvent = 1 : numEvents
                 axes(h_axes(plotRow, iEvent));
                 
-                toPlot = squeeze(meanRegionMRL(iEvent,:,:))';
+                if numEvents == 1
+                    toPlot = meanRegionMRL';
+                else
+                    toPlot = squeeze(meanRegionMRL(iEvent,:,:))';
+                end
                 h_pcolor = pcolor(scalogram_metadata.t, ...
                         f, ...
                         toPlot);

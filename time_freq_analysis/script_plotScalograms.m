@@ -326,7 +326,7 @@ for i_chDB = 1:4%length(chDB_list)
                 page_regionList = ROI_list{iRegion};
                 numPages = numPages + 1;
             else
-                page_regionList = [page_regionList ', ' ch.name];
+                page_regionList = [page_regionList ', ' ROI_list{iRegion}];
             end
             
             for iEvent = 1 : numEvents

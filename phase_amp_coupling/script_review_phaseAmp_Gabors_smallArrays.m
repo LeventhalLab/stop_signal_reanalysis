@@ -2,6 +2,7 @@
 
 chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
 phaseAmp_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phaseAmp_windowed_Gabors';
+phaseAmp_plot_directory = '/Volumes/Tbolt_02/stop-signal reanalysis/phaseAmp_windowed_Gabors_plots';
 
 makePlots = true;
 trialTypeList = {'any','correctgo', 'wronggo', 'correctstop', 'failedstop', 'correctnogo', 'failednogo'};
@@ -58,6 +59,11 @@ for i_chDB = 1 : 4%length(chDB_list)
         continue;
     end
     
+    subject_phaseAmp_plot_dir = fullfile(phaseAmp_plot_directory, [implantID '_phase_amp']);
+    if ~exist(subject_phaseAmp_plot_dir, 'dir')
+        continue;
+    end
+    
     chDB_info = whos( [chDB_list{i_chDB}(1:3) 'Ch*'] );
     channels = eval( chDB_info.name );
     
@@ -70,8 +76,12 @@ for i_chDB = 1 : 4%length(chDB_list)
         fig_saveName = cell(length(var_to_plot), length(plotTypes));
         mat_saveName = [implantID '_phaseAmp_' trialTypeList{iTrialType} '_Gabor_summary.mat'];
         subject_trialType_dir = fullfile(subject_phaseAmpdir, [implantID '_phaseAmp_' trialType '_Gabors']);
+        subject_trialType_plot_dir = fullfile(subject_phaseAmp_plot_dir, [implantID '_phaseAmp_' trialType '_Gabors_plots']);
         if ~exist(subject_trialType_dir,'dir')
             mkdir(subject_trialType_dir);
+        end
+        if ~exist(subject_trialType_plot_dir,'dir')
+            mkdir(subject_trialType_plot_dir);
         end
         mat_saveName = fullfile(subject_trialType_dir, mat_saveName);
 %         if exist(mat_saveName,'file');continue;end
@@ -85,8 +95,8 @@ for i_chDB = 1 : 4%length(chDB_list)
                 for iFreq = 1 : length(plotFreqs{iPlotType})
                     freqStr = sprintf('%04.0f',plotFreqs{iPlotType}(iFreq));
                     fig_saveName{iVar, iPlotType}{iFreq} = ...
-                        ['phaseAmp_' trialTypeList{iTrialType} '_' var_to_plot{iVar} '_' plotTypes{iPlotType} '_' freqStr '_Gabor.pdf'];
-                    fig_saveName{iVar, iPlotType}{iFreq} = fullfile(subject_trialType_dir, fig_saveName{iVar, iPlotType}{iFreq});
+                        ['phaseAmp_' trialTypeList{iTrialType} '_' var_to_plot{iVar} '_' plotTypes{iPlotType} '_' freqStr '_Gabor'];
+                    fig_saveName{iVar, iPlotType}{iFreq} = fullfile(subject_trialType_plot_dir, fig_saveName{iVar, iPlotType}{iFreq});
                 end
 
             end    % for iPlotType...
@@ -161,6 +171,11 @@ for i_chDB = 1 : 4%length(chDB_list)
             fprintf('analyzing %s, session %d of %d\n', sessionList{iSession}, iSession, numSessions)
             phaseAmp_sessionDir = fullfile(subject_phaseAmpdir, sessionList{iSession}, [sessionList{iSession} '_' trialType]);
             if ~exist(phaseAmp_sessionDir, 'dir'); continue; end
+            
+            session_phaseAmp_plot_dir = fullfile(subject_phaseAmp_plot_dir, sessionList{iSession}, [sessionList{iSession} '_' trialType]);
+            if ~exist(session_phaseAmp_plot_dir, 'dir')
+                continue;
+            end
 
             region_meanName = ['gaborPhaseAmp_byRegion_' trialTypeList{iTrialType} '_' sessionList{iSession} '.mat'];
             region_meanName = fullfile(phaseAmp_sessionDir, region_meanName);

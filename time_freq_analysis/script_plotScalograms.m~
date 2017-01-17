@@ -198,7 +198,6 @@ for i_chDB = 1:4%length(chDB_list)
                         cur_figName = sprintf('%s_%02d.fig', saveName, numPages);
                         cur_PDFname = fullfile(session_scalogramDir, cur_PDFname);
                         cur_figName = fullfile(session_scalogramDir, cur_figName);
-                        
                         textStr = cell(1,3);
                         textStr{1} = [implantID ', ' trialType ', log power scalograms, single channels in ' ROI_list{iRegion}];
                         textStr{2} = page_chList;
@@ -275,11 +274,6 @@ for i_chDB = 1:4%length(chDB_list)
                     h_figAxes = createFigAxes(h_fig);
                     axes(h_figAxes);
                     
-                    cur_PDFname = sprintf('%s_region_means_%02d.pdf', saveName, numPages);
-                    cur_figName = sprintf('%s_region_means_%02d.fig', saveName, numPages);
-                    cur_PDFname = fullfile(session_scalogramDir, cur_PDFname);
-                    cur_figName = fullfile(session_scalogramDir, cur_figName);
-                        
                     textStr = cell(1,4);
                     textStr{1} = [implantID ', ' trialType ', log power scalograms, averaged across channels for each region'];
                     textStr{2} = sessionList{iSession};
@@ -287,9 +281,7 @@ for i_chDB = 1:4%length(chDB_list)
                     textStr{4} = ['color limits: ' num2str(colLim(1)) ', ' num2str(colLim(2))];
                     text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
 
-                    print(cur_PDFname, '-dpdf');
-                    savefig(h_fig,cur_figName,'compact');
-
+                    export_fig(PDFname, '-pdf', '-q101', '-painters', '-append','-nocrop');
                     close(h_fig);
                 end
                 
@@ -298,7 +290,7 @@ for i_chDB = 1:4%length(chDB_list)
         end    % for iSession...
         
         % now, average across all session-regions
-        saveName = [implantID '_' trialType '_scalograms'];
+        PDFname = fullfile(subject_scalogramDir, [implantID '_' trialType '_scalograms.pdf']);
         mean_subjectPowerName = fullfile(subject_scalogramDir,[implantID '_' trialType '_meanScalograms.mat']);
         figProps.m = regions_per_page;
         figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
@@ -330,10 +322,9 @@ for i_chDB = 1:4%length(chDB_list)
                 axes(h_axes(plotRow, iEvent));
                 
                 toPlot = squeeze(log_meanRegionPower(iEvent,:,:))';
-                h_pcolor = pcolor(scalogram_metadata.t, ...
+                h_pcolor = pc(scalogram_metadata.t, ...
                         f_idx, ...
                         toPlot);
-                h_pcolor.EdgeColor = 'none';
                 colormap(cmap);
                 set(gca,'ydir','normal',...
                         'xtick',t_ticks,...
@@ -358,19 +349,13 @@ for i_chDB = 1:4%length(chDB_list)
                 h_figAxes = createFigAxes(h_fig);
                 axes(h_figAxes);
                 
-                cur_PDFname = sprintf('%s_%02d.pdf', saveName, numPages);
-                cur_figName = sprintf('%s_%02d.fig', saveName, numPages);
-                cur_PDFname = fullfile(subject_scalogramDir, cur_PDFname);
-                cur_figName = fullfile(subject_scalogramDir, cur_figName);
-                        
                 textStr = cell(1,3);
                 textStr{1} = [implantID ', ' trialType ', log power scalograms, averaged across channels and sessions for each region'];
                 textStr{2} = page_regionList;
                 textStr{3} = ['color limits: ' num2str(colLim(1)) ', ' num2str(colLim(2))];
                 text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
 
-                print(cur_PDFname, '-dpdf');
-                savefig(h_fig,cur_figName,'compact');
+                export_fig(PDFname, '-pdf', '-q101', '-painters', '-append','-nocrop');
                 close(h_fig);
             end
             

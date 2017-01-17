@@ -1,4 +1,4 @@
-% script to plot scalograms
+% script to plot phase scalograms
 
 chDB_directory    = '/Volumes/Tbolt_02/stop-signal reanalysis/stop-signal data structures';
 scalogramDir = '/Volumes/Tbolt_02/stop-signal reanalysis/trial_scalograms';
@@ -22,7 +22,7 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
                                               figProps.topMargin - botMargin - ...
                                               sum(figProps.rowSpacing)) / figProps.m;
 
-colLim = [-10 -5.0];
+colLim = [0 0.5];
 desired_freq_ticks = [2,8,20,50,80,250];
 
 cmap = 'jet';
@@ -84,15 +84,15 @@ for i_chDB = 1:4%length(chDB_list)
                                         
 
         numSamps  = length(t); numFreqs = length(f);
-        mean_sessionRegionPwr = NaN(numSessions, numRegions, numEvents, numSamps, numFreqs);
+        mean_sessionRegionMRL = NaN(numSessions, numRegions, numEvents, numSamps, numFreqs);
             
         numPages = 0;
         for iSession = 1 : numSessions
             session_scalogramDir = fullfile(subject_scalogramDir,[sessionList{iSession} '_scalograms']);
             if ~exist(session_scalogramDir,'file'); continue; end
 
-            saveName = [sessionList{iSession} '_' trialType '_scalograms'];
-            mean_sessionPowerName = fullfile(session_scalogramDir,[sessionList{iSession} '_' trialType '_meanRegionScalograms.mat']);
+            saveName = [sessionList{iSession} '_' trialType '_mrl'];
+            mean_sessionMRLname = fullfile(session_scalogramDir,[sessionList{iSession} '_' trialType '_meanRegionMRL.mat']);
             
             fprintf('session %s, %d of %d\n', ...
                 sessionList{iSession}, iSession, numSessions)
@@ -115,7 +115,7 @@ for i_chDB = 1:4%length(chDB_list)
                 if isempty(sessionRegionChannels);continue;end
                 numSessionRegionChannels = length(region_chList);
                 
-                mean_chPower = NaN(numSessionRegionChannels, numEvents, numSamps, numFreqs);
+                mean_chMRL = NaN(numSessionRegionChannels, numEvents, numSamps, numFreqs);
                 
                 numChPlots = 0;
                 figProps.m = regions_per_page;
@@ -125,7 +125,7 @@ for i_chDB = 1:4%length(chDB_list)
                 for iCh = 1 : numSessionRegionChannels
                     ch = sessionRegionChannels{iCh};
                     ch_scalogramName = fullfile(session_scalogramDir,[ch.name '_' trialType '_scalograms.mat']);
-                    mean_chPowerName = fullfile(session_scalogramDir,[ch.name '_' trialType '_meanScalograms.mat']);
+                    mean_chMRLname = fullfile(session_scalogramDir,[ch.name '_' trialType '_meanMRL.mat']);
                     if numSessionRegionChannels < figProps.m
                         figProps.m = numSessionRegionChannels;
                         figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
@@ -152,20 +152,23 @@ for i_chDB = 1:4%length(chDB_list)
                         page_chList = [page_chList ', ' ch.name];
                     end
 
+                    Wphase = angle(W);
+                    mrl = abs(squeeze(mean(exp(1i * Wphase),3)));
+                    
                     if length(scalogram_metadata.eventList) == 1
-                        mean_chPower(iCh,1,:,:) = squeeze(mean(abs(W).^2,3));
+                        mean_chMRL(iCh,1,:,:) = mrl;
                     else
-                        mean_chPower(iCh,:,:,:) = squeeze(mean(abs(W).^2,3));
+                        mean_chMRL(iCh,:,:,:) = mrl;
                     end
                     
-                    if ~exist(mean_chPowerName, 'file')
-                        save(mean_chPowerName, 'mean_chPower', 'scalogram_metadata');
+                    if ~exist(mean_chMRLname, 'file')
+                        save(mean_chMRLname, 'mean_chMRL', 'scalogram_metadata');
                     end
                     
                     for iEvent = 1 : length(scalogram_metadata.eventList)
                         axes(h_axes(plotRow, iEvent));
                         
-                        toPlot = log(squeeze(mean_chPower(iCh,iEvent,:,:)))';
+                        toPlot = squeeze(mean_chMRL(iCh,iEvent,:,:))';
                         h_pcolor = pcolor(scalogram_metadata.t, ...
                                 f, ...
                                 toPlot);
@@ -201,7 +204,7 @@ for i_chDB = 1:4%length(chDB_list)
                         cur_figName = fullfile(session_scalogramDir, cur_figName);
                         
                         textStr = cell(1,3);
-                        textStr{1} = [implantID ', ' trialType ', log power scalograms, single channels in ' ROI_list{iRegion}];
+                        textStr{1} = [implantID ', ' trialType ', MRL, single channels in ' ROI_list{iRegion}];
                         textStr{2} = page_chList;
                         textStr{3} = ['color limits: ' num2str(colLim(1)) ', ' num2str(colLim(2))];
                         text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
@@ -216,7 +219,7 @@ for i_chDB = 1:4%length(chDB_list)
                         close(h_fig);
                     end
                 end    % for iCh...
-                mean_sessionRegionPwr(iSession, iRegion, :, :, :) = squeeze(mean(mean_chPower,1));
+                mean_sessionRegionMRL(iSession, iRegion, :, :, :) = squeeze(mean(mean_chPower,1));
                 
             end    % for iRegion...
             % now make a page of plots with the average for each region for
@@ -248,7 +251,7 @@ for i_chDB = 1:4%length(chDB_list)
                 for iEvent = 1 : numEvents
                     axes(h_axes(plotRow, iEvent));
                     
-                    toPlot = log(squeeze(mean_sessionRegionPwr(iSession,iRegion,iEvent,:,:)))';
+                    toPlot = squeeze(mean_sessionRegionMRL(iSession,iRegion,iEvent,:,:))';
                     h_pcolor = pcolor(scalogram_metadata.t, ...
                             f, ...
                             toPlot);
@@ -284,7 +287,7 @@ for i_chDB = 1:4%length(chDB_list)
                     cur_figName = fullfile(session_scalogramDir, cur_figName);
                         
                     textStr = cell(1,4);
-                    textStr{1} = [implantID ', ' trialType ', log power scalograms, averaged across channels for each region'];
+                    textStr{1} = [implantID ', ' trialType ', MRL, averaged across channels for each region'];
                     textStr{2} = sessionList{iSession};
                     textStr{3} = page_regionList;
                     textStr{4} = ['color limits: ' num2str(colLim(1)) ', ' num2str(colLim(2))];
@@ -301,7 +304,7 @@ for i_chDB = 1:4%length(chDB_list)
         end    % for iSession...
         
         % now, average across all session-regions
-        saveName = [implantID '_' trialType '_scalograms'];
+        saveName = [implantID '_' trialType '_mrl_scalograms'];
         mean_subjectPowerName = fullfile(subject_scalogramDir,[implantID '_' trialType '_meanScalograms.mat']);
         figProps.m = regions_per_page;
         figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
@@ -315,7 +318,7 @@ for i_chDB = 1:4%length(chDB_list)
                                                               sum(figProps.rowSpacing)) / figProps.m;
             end
             
-            log_meanRegionPower = log(squeeze(nanmean(mean_sessionRegionPwr(:,iRegion,:,:,:),1)));
+            meanRegionMRL = squeeze(nanmean(mean_sessionRegionMRL(:,iRegion,:,:,:),1));
 
             plotRow = rem(iRegion,figProps.m);
             if plotRow == 0
@@ -332,11 +335,7 @@ for i_chDB = 1:4%length(chDB_list)
             for iEvent = 1 : numEvents
                 axes(h_axes(plotRow, iEvent));
                 
-                if numEvents == 1
-                    toPlot = log_meanRegionPower';
-                else
-                    toPlot = squeeze(log_meanRegionPower(iEvent,:,:))';
-                end
+                toPlot = squeeze(meanRegionMRL(iEvent,:,:))';
                 h_pcolor = pcolor(scalogram_metadata.t, ...
                         f, ...
                         toPlot);
@@ -372,7 +371,7 @@ for i_chDB = 1:4%length(chDB_list)
                 cur_figName = fullfile(subject_scalogramDir, cur_figName);
                         
                 textStr = cell(1,3);
-                textStr{1} = [implantID ', ' trialType ', log power scalograms, averaged across channels and sessions for each region'];
+                textStr{1} = [implantID ', ' trialType ', MRL, averaged across channels and sessions for each region'];
                 textStr{2} = page_regionList;
                 textStr{3} = ['color limits: ' num2str(colLim(1)) ', ' num2str(colLim(2))];
                 text('units','centimeters','position',[3, 8*2.54], 'string',textStr);
@@ -393,7 +392,7 @@ for i_chDB = 1:4%length(chDB_list)
         subject_region_metadata.eventList = scalogram_metadata.eventList;
         subject_region_metadata.regionList = ROI_list;
         % may need more metadata, can add them later
-        save(mean_subjectPowerName, 'mean_sessionRegionPwr', 'subject_region_metadata');
+        save(mean_subjectPowerName, 'mean_sessionRegionMRL', 'subject_region_metadata');
         
     end    % for iTrialType...
     

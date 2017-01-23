@@ -32,16 +32,16 @@ figProps.panelHeight = ones(1, figProps.m) * (figProps.height - ...
 
 var_to_plot = {'mrl','zscore'};
 plotTypes = {'const_phase_f', 'const_amp_f', 'averaged_t'};
-phase_freq = [2.0, 4.0, 8.0];       % Hz, for the time-frequency plots, can only look at one "phase" frequency at a time
-amp_freq   = [19.5, 49.5];          % Hz, for the time-frequency plots, can only look at one "amplitude" frequency at a time
+phase_freq = [2.0, 4.0, 8.0, 18.5, 51.1];       % Hz, for the time-frequency plots, can only look at one "phase" frequency at a time
+amp_freq   = [18.5, 51.1];          % Hz, for the time-frequency plots, can only look at one "amplitude" frequency at a time
 plotFreqs{1} = phase_freq;
 plotFreqs{2} = amp_freq;
 plotFreqs{3} = 1;    % dummy variable to make the indexing work later
 totalPlotTypes = length(var_to_plot) * (1 + length(phase_freq) + length(amp_freq));
 % numPlotTypes = length(plotTypes);
 
-desired_amp_freq_ticks = [10,20,50,80];    % check that these frequencies are the ones actually being marked
-desired_phase_freq_ticks = [2,4,8,16,20];
+desired_amp_freq_ticks = [10,20,50,80,250];    % check that these frequencies are the ones actually being marked
+desired_phase_freq_ticks = [2,4,8,16,20,50];
 
 for i_chDB = 1 : 4%length(chDB_list)
     
@@ -95,7 +95,7 @@ for i_chDB = 1 : 4%length(chDB_list)
                 for iFreq = 1 : length(plotFreqs{iPlotType})
                     freqStr = sprintf('%04.0f',plotFreqs{iPlotType}(iFreq));
                     fig_saveName{iVar, iPlotType}{iFreq} = ...
-                        ['phaseAmp_' trialTypeList{iTrialType} '_' var_to_plot{iVar} '_' plotTypes{iPlotType} '_' freqStr '_Gabor'];
+                        [implantID '_phaseAmp_' trialTypeList{iTrialType} '_' var_to_plot{iVar} '_' plotTypes{iPlotType} '_' freqStr '_Gabor'];
                     fig_saveName{iVar, iPlotType}{iFreq} = fullfile(subject_trialType_plot_dir, fig_saveName{iVar, iPlotType}{iFreq});
                 end
 
@@ -288,8 +288,9 @@ for i_chDB = 1 : 4%length(chDB_list)
                                         textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                     end
                                     x = t;
-                                    y = 1:length(amp_f);
-                                    y_ticks = amp_freqTick_idx;
+%                                     y = 1:length(amp_f);
+                                    y = amp_f;
+                                    y_ticks = amp_f(amp_freqTick_idx);
                                     x_ticks = t_ticks;
                                     yticklabel = amp_freqTick_label;
                                     xticklabel = x_ticks;
@@ -306,8 +307,9 @@ for i_chDB = 1 : 4%length(chDB_list)
                                         textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                     end
                                     x = t;
-                                    y = 1:length(phase_f);
-                                    y_ticks = phase_freqTick_idx;
+%                                     y = 1:length(phase_f);
+                                    y = phase_f;
+                                    y_ticks = phase_f(phase_freqTick_idx);
                                     x_ticks = t_ticks;
                                     yticklabel = phase_freqTick_label;
                                     xticklabel = x_ticks;
@@ -323,10 +325,12 @@ for i_chDB = 1 : 4%length(chDB_list)
                                         textStr{1} = 'mrl z-score, phase-amplitude coupling, average across time';
                                         textStr{5} = sprintf('color limits: %f to %f', z_clim(1), z_clim(2));
                                     end
-                                    x = 1:length(phase_f);
-                                    y = 1:length(amp_f);
-                                    x_ticks = phase_freqTick_idx;
-                                    y_ticks = amp_freqTick_idx;
+%                                     x = 1:length(phase_f);
+                                    x = phase_f;
+%                                     y = 1:length(amp_f);
+                                    y = amp_f;
+                                    x_ticks = phase_f(phase_freqTick_idx);
+                                    y_ticks = amp_f(amp_freqTick_idx);
                                     yticklabel = amp_freqTick_label;
                                     xticklabel = phase_freqTick_label;
                             end
@@ -335,6 +339,9 @@ for i_chDB = 1 : 4%length(chDB_list)
                             h_pcolor = pcolor(x,y,toPlot);    % need to check that toPlot is in the correct orientation
                             h_pcolor.EdgeColor = 'none';
                             set(gca,'yscale','log');
+                            if strcmpi(plotTypes{iPlotType},'averaged_t')
+                                set(gca,'xscale','log');
+                            end
                             set(gca,'ydir','normal',...
                                     'clim',colorLim,...
                                     'xtick',x_ticks,...
